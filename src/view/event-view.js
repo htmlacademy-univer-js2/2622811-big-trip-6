@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view';
 
 function createEventTemplate({date, type, start, end, price, isFavorite}, offers, destination) {
   const dateISO = dayjs(date).format('YYYY-MM-DD');
@@ -57,13 +57,13 @@ function createEventTemplate({date, type, start, end, price, isFavorite}, offers
   `;
 }
 
-export default class EventView {
-  #element = null;
+export default class EventView extends AbstractView {
   #event;
   #offers;
   #destination;
 
   constructor(event, offers, destination) {
+    super();
     this.#event = event;
     this.#offers = offers;
     this.#destination = destination;
@@ -71,17 +71,5 @@ export default class EventView {
 
   get template() {
     return createEventTemplate(this.#event, this.#offers, this.#destination);
-  }
-
-  getElement() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }

@@ -1,10 +1,10 @@
 import EventsView from '../view/events-view';
 import InfoView from '../view/info-view';
-import {render, RenderPosition} from '../render';
 import FilterView from '../view/filter-view';
 import SortView from '../view/sort-view';
 import EventView from '../view/event-view';
 import EditEventView from '../view/edit-event-view';
+import {render, RenderPosition} from '../framework/render';
 
 export class PagePresenter {
   #eventsModel;
@@ -54,7 +54,7 @@ export class PagePresenter {
         event.offers.map((id) => this.#eventsModel.getOfferById(id)),
         this.#eventsModel.getDestinationById(event.destination)
       );
-      render(eventView, eventsView.getElement());
+      render(eventView, eventsView.element);
     }
   }
 
@@ -65,13 +65,13 @@ export class PagePresenter {
       this.#eventsModel.getDestinationById(event.destination),
       event
     );
-    render(editEventView, eventsView.getElement(), RenderPosition.AFTERBEGIN);
+    render(editEventView, eventsView.element, RenderPosition.AFTERBEGIN);
 
     const newEventView = new EditEventView(
       this.#eventsModel.getOffersByType('taxi'),
       this.#eventsModel.getDestinations()[0]
     );
-    render(newEventView, eventsView.getElement());
+    render(newEventView, eventsView.element);
 
     render(eventsView, document.querySelector('.trip-events'));
   }

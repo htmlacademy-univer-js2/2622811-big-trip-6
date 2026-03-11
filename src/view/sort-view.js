@@ -1,4 +1,4 @@
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view';
 
 function createSortTemplate({sortItems, selectedItem}) {
   const sortItemsTemplate = sortItems.map(({ id, name, disabled = false }) => `
@@ -30,27 +30,15 @@ const SORT_ITEMS = [
   {id: 'offers', name: 'Offers', disabled: true},
 ];
 
-export default class SortView {
-  #element = null;
+export default class SortView extends AbstractView {
   #selectedItem = null;
 
   constructor(selectedItem) {
+    super();
     this.#selectedItem = selectedItem;
   }
 
   get template() {
     return createSortTemplate({sortItems: SORT_ITEMS, selectedItem: this.#selectedItem});
-  }
-
-  getElement() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }

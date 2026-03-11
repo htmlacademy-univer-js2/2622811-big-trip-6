@@ -1,4 +1,4 @@
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view';
 
 function createInfoTemplate({title, dates, cost}) {
   return `
@@ -15,13 +15,13 @@ function createInfoTemplate({title, dates, cost}) {
     `;
 }
 
-export default class InfoView {
-  #element = null;
+export default class InfoView extends AbstractView {
   #title = null;
   #dates = null;
   #cost = 0;
 
   constructor(title, dates, cost) {
+    super();
     this.#title = title;
     this.#dates = dates;
     this.#cost = cost;
@@ -29,18 +29,5 @@ export default class InfoView {
 
   get template() {
     return createInfoTemplate({title: this.#title, dates: this.#dates, cost: this.#cost});
-  }
-
-
-  getElement() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }
