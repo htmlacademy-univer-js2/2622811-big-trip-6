@@ -1,5 +1,5 @@
-import {createElement} from '../render.js';
 import dayjs from 'dayjs';
+import AbstractView from '../framework/view/abstract-view';
 
 const EVENT_TYPES = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
 
@@ -106,31 +106,23 @@ function createEditEventTemplate({id, type = EVENT_TYPES[0], price, start, end, 
       </form>`;
 }
 
-export default class EditEventView {
-  #element = null;
+export default class EditEventView extends AbstractView {
   #editingEvent;
   #offers;
   #destination;
 
-  constructor(offers, destination, editingEvent = null) {
+  constructor(offers, destination, editingEvent = null, onSubmit = () => {}) {
+    super();
     this.#offers = offers;
     this.#destination = destination;
     this.#editingEvent = editingEvent;
+    this.element.addEventListener('submit', onSubmit);
+    if (editingEvent) {
+      this.element.querySelector('.event__rollup-btn').addEventListener('click', onSubmit);
+    }
   }
 
   get template() {
     return createEditEventTemplate(this.#editingEvent ?? {}, this.#offers, this.#destination);
-  }
-
-  getElement() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }
