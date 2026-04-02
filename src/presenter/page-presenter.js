@@ -4,6 +4,7 @@ import FilterView from '../view/filter-view';
 import SortView from '../view/sort-view';
 import {render, RenderPosition} from '../framework/render';
 import {EventPresenter} from './event-presenter';
+import EmptyMessageView from '../view/empty-message-view';
 
 export class PagePresenter {
   #eventsModel;
@@ -18,12 +19,18 @@ export class PagePresenter {
   }
 
   init() {
-    this.#events = [...this.#eventsModel.getEvents()];
-    this.#renderInfo();
-    this.#renderFilter();
-    this.#renderSort();
-
     const eventsView = new EventsView();
+
+    this.#events = [...this.#eventsModel.getEvents()];
+    if (this.#events.length > 0) {
+      this.#renderInfo();
+      this.#renderSort();
+    } else {
+      const message = new EmptyMessageView();
+      render(message, eventsView.element);
+    }
+
+    this.#renderFilter();
     this.#renderEvents(eventsView);
     this.#renderEventForms(eventsView);
   }
