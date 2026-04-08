@@ -1,11 +1,17 @@
 export class EventsModel {
-  #events = [];
+  #events = {};
 
   constructor(events = []) {
-    this.#events = events;
+    this.#events = Object.fromEntries(
+      events.map((event) => [event.id, event])
+    );
   }
 
   getEvents() {
-    return this.#events;
+    return Object.values(this.#events);
+  }
+
+  updateEvent(updatedEvent) {
+    this.#events[updatedEvent.id] = updatedEvent;
   }
 }
