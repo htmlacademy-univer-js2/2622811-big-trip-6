@@ -11,15 +11,17 @@ export class PagePresenter {
   #offersModel;
   #destinationsModel;
   #events;
+  #eventPresenters = {};
+  #eventsView = null;
 
-  constructor({eventsModel, offersModel, destinationsModel}) {
+  constructor({ eventsModel, offersModel, destinationsModel }) {
     this.#eventsModel = eventsModel;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
   }
 
   init() {
-    const eventsView = new EventsView();
+    this.#eventsView = new EventsView();
 
     this.#events = [...this.#eventsModel.getEvents()];
     if (this.#events.length > 0) {
@@ -27,22 +29,26 @@ export class PagePresenter {
       this.#renderSort();
     } else {
       const message = new EmptyMessageView();
-      render(message, eventsView.element);
+      render(message, this.#eventsView.element);
     }
 
     this.#renderFilter();
-    this.#renderEvents(eventsView);
-    this.#renderEventForms(eventsView);
+    this.#renderEvents();
+    this.#renderEventForms();
   }
 
   #renderInfo() {
     const infoView = new InfoView(
       'Amsterdam &mdash; Chamonix &mdash; Geneva',
       '18&nbsp;&mdash;&nbsp;20 Mar',
-      1230
+      1230,
     );
 
-    render(infoView, document.querySelector('.trip-main'), RenderPosition.AFTERBEGIN);
+    render(
+      infoView,
+      document.querySelector('.trip-main'),
+      RenderPosition.AFTERBEGIN,
+    );
   }
 
   #renderFilter() {
@@ -57,20 +63,34 @@ export class PagePresenter {
     render(sortView, document.querySelector('.trip-events'));
   }
 
-  #renderEvents(eventsView) {
+  #renderEvents() {
     for (const event of this.#events) {
-      const presenter = new EventPresenter(event, this.#offersModel, this.#destinationsModel);
-      presenter.render(eventsView);
+      const presenter = new EventPresenter({
+        offersModel: this.#offersModel,
+        destinationsModel: this.#destinationsModel,
+        onDataChange: this.#handleEventChange,
+        onModeChange: this.#handleModeChange,
+      });
+
+      presenter.init(this.#eventsView, event);
+      this.#eventPresenters[event.id] = presenter;
     }
   }
 
-  #renderEventForms(eventsView) {
-    // const newEventView = new EditEventView(
-    //   this.#offersModel.getByType('taxi'),
-    //   this.#destinationsModel.getDestinations()[0]
-    // );
-    // render(newEventView, eventsView.element);
-
-    render(eventsView, document.querySelector('.trip-events'));
+  #renderEventForms() {
+    render(this.#eventsView, document.querySelector('.trip-events'));
   }
+
+  #handleEventChange = (updatedEvent) => {
+    this.#eventsModel.updateEvent(updatedEvent);
+
+    const presenter = this.#eventPresenters[updatedEvent.id];
+    presenter?.init(this.#eventsView, updatedEvent);
+  };
+
+  #handleModeChange = () => {
+    Object.values(this.#eventPresenters).forEach((presenter) =>
+      presenter.resetView(),
+    );
+  };
 }
