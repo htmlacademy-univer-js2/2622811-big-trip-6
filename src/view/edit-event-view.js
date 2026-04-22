@@ -1,18 +1,8 @@
 import dayjs from 'dayjs';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import {EVENT_TYPES} from '../types.js';
-
-function parseDateTime(value) {
-  const [datePart = '', timePart = ''] = value.split(' ');
-  const [day, month, year] = datePart.split('/').map(Number);
-  const [hours, minutes] = timePart.split(':').map(Number);
-
-  if ([day, month, year, hours, minutes].some(Number.isNaN)) {
-    return null;
-  }
-
-  return new Date(2000 + year, month - 1, day, hours, minutes);
-}
 
 function createEditEventTemplate(state) {
   const {
@@ -146,6 +136,8 @@ export default class EditEventView extends AbstractStatefulView {
   #destinations;
   #offersModel;
   #onSubmit;
+  #startDatepicker = null;
+  #endDatepicker = null;
 
   constructor({editingEvent = null, destinations = [], offersModel, onSubmit = () => {}} = {}) {
     super();
@@ -171,8 +163,6 @@ export default class EditEventView extends AbstractStatefulView {
     const form = this.element;
     const destinationName = form.querySelector('.event__input--destination').value;
     const selectedDestination = this.#destinations.find(({name}) => name === destinationName) ?? null;
-    const start = parseDateTime(form.querySelector('#event-start-time-1').value);
-    const end = parseDateTime(form.querySelector('#event-end-time-1').value);
     const {
       availableOffers,
       destination: currentDestination,
@@ -186,9 +176,6 @@ export default class EditEventView extends AbstractStatefulView {
         .filter(({id}) => form.querySelector(`#event-offer-${id}`)?.checked)
         .map(({id}) => id),
       price: Number(form.querySelector('#event-price-1').value),
-      start: start ?? this._state.start,
-      end: end ?? this._state.end,
-      date: start ? dayjs(start).startOf('day').toDate() : this._state.date,
     };
   }
 
@@ -196,9 +183,15 @@ export default class EditEventView extends AbstractStatefulView {
     this.element.addEventListener('submit', this.#submitHandler);
     this.element.querySelector('.event__type-group').addEventListener('change', this.#typeChangeHandler);
     this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+    this.#setDatepickers();
 
     const rollupButton = this.element.querySelector('.event__rollup-btn');
     rollupButton?.addEventListener('click', this.#rollupClickHandler);
+  }
+
+  removeElement() {
+    this.#destroyDatepickers();
+    super.removeElement();
   }
 
   #submitHandler = (evt) => {
@@ -235,6 +228,59 @@ export default class EditEventView extends AbstractStatefulView {
 
     this.updateElement({
       destination: selectedDestination,
+    });
+  };
+
+  #setDatepickers() {
+    const config = {
+      dateFormat: 'd/m/y H:i',
+      enableTime: true,
+      'time_24hr': true,
+    };
+    this.#startDatepicker = flatpickr(
+      this.element.querySelector('#event-start-time-1'),
+      {
+        ...config,
+        defaultDate: this._state.start,
+        onChange: this.#startDateChangeHandler,
+      },
+    );
+
+    this.#endDatepicker = flatpickr(
+      this.element.querySelector('#event-end-time-1'),
+      {
+        ...config,
+        defaultDate: this._state.end,
+        onChange: this.#endDateChangeHandler,
+      },
+    );
+  }
+
+  #destroyDatepickers() {
+    this.#startDatepicker?.destroy();
+    this.#endDatepicker?.destroy();
+    this.#startDatepicker = null;
+    this.#endDatepicker = null;
+  }
+
+  #startDateChangeHandler = ([selectedDate]) => {
+    if (!selectedDate) {
+      return;
+    }
+
+    this._setState({
+      start: selectedDate,
+      date: dayjs(selectedDate).startOf('day').toDate(),
+    });
+  };
+
+  #endDateChangeHandler = ([selectedDate]) => {
+    if (!selectedDate) {
+      return;
+    }
+
+    this._setState({
+      end: selectedDate,
     });
   };
 }
