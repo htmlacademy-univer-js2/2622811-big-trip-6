@@ -1,10 +1,10 @@
-import {createDestination} from '../mock/event-mock';
+import {DESTINATIONS} from '../mock/event-mock';
 
 export class DestinationsModel {
   #destinations = [];
 
-  constructor(destinationIds = []) {
-    this.#destinations = destinationIds.map(createDestination);
+  constructor() {
+    this.#destinations = DESTINATIONS;
   }
 
   getDestinations() {
