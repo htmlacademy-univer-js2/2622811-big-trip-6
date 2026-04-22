@@ -53,9 +53,6 @@ export class EventPresenter {
     } else {
       replace(this.eventView, prevEventView);
     }
-
-    document.removeEventListener('keyup', this.#escKeyDownHandler);
-    document.addEventListener('keyup', this.#escKeyDownHandler);
   }
 
   swapToEdit() {
@@ -65,6 +62,7 @@ export class EventPresenter {
     this.#handleModeChange();
     replace(this.editEventView, this.eventView);
     this.#isEditing = true;
+    document.addEventListener('keyup', this.#escKeyDownHandler);
   }
 
   swapToEvent() {
@@ -73,6 +71,7 @@ export class EventPresenter {
     }
     replace(this.eventView, this.editEventView);
     this.#isEditing = false;
+    document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
 
   resetView() {
