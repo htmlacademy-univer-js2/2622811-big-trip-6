@@ -8,7 +8,8 @@ function createSortTemplate({sortItems, selectedItem}) {
           class="trip-sort__input  visually-hidden"
           type="radio"
           name="trip-sort"
-          value="sort-${id}"
+          value="${id}"
+          data-sort-type="${id}"
           ${selectedItem === id ? 'checked' : ''}
           ${disabled ? 'disabled' : ''}>
       <label class="trip-sort__btn" for="sort-${id}">${name}</label>
@@ -32,13 +33,25 @@ const SORT_ITEMS = [
 
 export default class SortView extends AbstractView {
   #selectedItem = null;
+  #handleSortTypeChange = null;
 
-  constructor(selectedItem) {
+  constructor(selectedItem, onSortTypeChange) {
     super();
     this.#selectedItem = selectedItem;
+    this.#handleSortTypeChange = onSortTypeChange;
+
+    this.element.addEventListener('change', this.#sortTypeChangeHandler);
   }
 
   get template() {
     return createSortTemplate({sortItems: SORT_ITEMS, selectedItem: this.#selectedItem});
   }
+
+  #sortTypeChangeHandler = (evt) => {
+    if (!evt.target.matches('.trip-sort__input')) {
+      return;
+    }
+
+    this.#handleSortTypeChange?.(evt.target.dataset.sortType);
+  };
 }

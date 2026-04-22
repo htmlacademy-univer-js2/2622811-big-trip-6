@@ -1,6 +1,6 @@
 import EventView from '../view/event-view';
 import EditEventView from '../view/edit-event-view';
-import {render, replace} from '../framework/render';
+import {render, replace, remove} from '../framework/render';
 
 export class EventPresenter {
   #event;
@@ -53,9 +53,6 @@ export class EventPresenter {
     } else {
       replace(this.eventView, prevEventView);
     }
-
-    document.removeEventListener('keyup', this.#escKeyDownHandler);
-    document.addEventListener('keyup', this.#escKeyDownHandler);
   }
 
   swapToEdit() {
@@ -65,6 +62,7 @@ export class EventPresenter {
     this.#handleModeChange();
     replace(this.editEventView, this.eventView);
     this.#isEditing = true;
+    document.addEventListener('keyup', this.#escKeyDownHandler);
   }
 
   swapToEvent() {
@@ -73,10 +71,16 @@ export class EventPresenter {
     }
     replace(this.eventView, this.editEventView);
     this.#isEditing = false;
+    document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
 
   resetView() {
     this.swapToEvent();
+  }
+
+  destroy() {
+    remove(this.eventView);
+    remove(this.editEventView);
   }
 
   #favoriteClickHandler() {

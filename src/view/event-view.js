@@ -1,6 +1,24 @@
 import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
 
+function formatDuration(start, end) {
+  const durationMinutes = dayjs(end).diff(dayjs(start), 'minute');
+
+  if (durationMinutes < 60) {
+    return `${durationMinutes}M`;
+  }
+
+  const days = Math.floor(durationMinutes / (24 * 60));
+  const hours = Math.floor((durationMinutes % (24 * 60)) / 60);
+  const minutes = durationMinutes % 60;
+
+  if (durationMinutes < 24 * 60) {
+    return `${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+  }
+
+  return `${String(days).padStart(2, '0')}D ${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+}
+
 function createEventTemplate({date, type, start, end, price, isFavorite}, offers, destination) {
   const dateISO = dayjs(date).format('YYYY-MM-DD');
   const dateShort = dayjs(date).format('MMM DD');
@@ -8,7 +26,7 @@ function createEventTemplate({date, type, start, end, price, isFavorite}, offers
   const startTime = dayjs(start).format('HH:mm');
   const endTimeISO = dayjs(end).toISOString();
   const endTime = dayjs(end).format('HH:mm');
-  const duration = dayjs(end).diff(dayjs(start), 'minute');
+  const duration = formatDuration(start, end);
 
   const title = `${type} ${destination.name}`;
 
@@ -34,7 +52,7 @@ function createEventTemplate({date, type, start, end, price, isFavorite}, offers
             &mdash;
             <time class="event__end-time" datetime="${endTimeISO}">${endTime}</time>
           </p>
-          <p class="event__duration">${duration}M</p>
+          <p class="event__duration">${duration}</p>
         </div>
         <p class="event__price">
           &euro;&nbsp;<span class="event__price-value">${price}</span>
