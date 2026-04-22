@@ -2,17 +2,33 @@ import EventsView from '../view/events-view';
 import InfoView from '../view/info-view';
 import FilterView from '../view/filter-view';
 import SortView from '../view/sort-view';
-import {render, RenderPosition} from '../framework/render';
+import {render, RenderPosition, remove} from '../framework/render';
 import {EventPresenter} from './event-presenter';
 import EmptyMessageView from '../view/empty-message-view';
+
+const SortType = {
+  DAY: 'day',
+  TIME: 'time',
+  PRICE: 'price',
+};
+
+const sortEventsByDay = (eventA, eventB) =>
+  new Date(eventA.start).getTime() - new Date(eventB.start).getTime();
+
+const sortEventsByTime = (eventA, eventB) =>
+  (new Date(eventB.end).getTime() - new Date(eventB.start).getTime()) -
+  (new Date(eventA.end).getTime() - new Date(eventA.start).getTime());
+
+const sortEventsByPrice = (eventA, eventB) => eventB.price - eventA.price;
 
 export class PagePresenter {
   #eventsModel;
   #offersModel;
   #destinationsModel;
-  #events;
+  #currentSortType = SortType.DAY;
   #eventPresenters = {};
   #eventsView = null;
+  #sortView = null;
 
   constructor({ eventsModel, offersModel, destinationsModel }) {
     this.#eventsModel = eventsModel;
@@ -23,8 +39,7 @@ export class PagePresenter {
   init() {
     this.#eventsView = new EventsView();
 
-    this.#events = [...this.#eventsModel.getEvents()];
-    if (this.#events.length > 0) {
+    if (this.#eventsModel.getEvents().length > 0) {
       this.#renderInfo();
       this.#renderSort();
     } else {
@@ -58,13 +73,19 @@ export class PagePresenter {
   }
 
   #renderSort() {
-    const sortView = new SortView('day');
+    this.#sortView = new SortView(this.#currentSortType, this.#handleSortTypeChange);
 
-    render(sortView, document.querySelector('.trip-events'));
+    render(
+      this.#sortView,
+      document.querySelector('.trip-events'),
+      RenderPosition.AFTERBEGIN,
+    );
   }
 
   #renderEvents() {
-    for (const event of this.#events) {
+    const events = this.#getSortedEvents();
+
+    for (const event of events) {
       const presenter = new EventPresenter({
         offersModel: this.#offersModel,
         destinationsModel: this.#destinationsModel,
@@ -80,6 +101,39 @@ export class PagePresenter {
   #renderEventForms() {
     render(this.#eventsView, document.querySelector('.trip-events'));
   }
+
+  #clearEventsList() {
+    for (const key in this.#eventPresenters) {
+      this.#eventPresenters[key].destroy();
+    }
+    this.#eventPresenters = {};
+  }
+
+  #getSortedEvents() {
+    const events = [...this.#eventsModel.getEvents()];
+
+    switch (this.#currentSortType) {
+      case SortType.TIME:
+        return events.sort(sortEventsByTime);
+      case SortType.PRICE:
+        return events.sort(sortEventsByPrice);
+      case SortType.DAY:
+      default:
+        return events.sort(sortEventsByDay);
+    }
+  }
+
+  #handleSortTypeChange = (sortType) => {
+    if (this.#currentSortType === sortType) {
+      return;
+    }
+
+    this.#currentSortType = sortType;
+    this.#clearEventsList();
+    remove(this.#sortView);
+    this.#renderSort();
+    this.#renderEvents();
+  };
 
   #handleEventChange = (updatedEvent) => {
     this.#eventsModel.updateEvent(updatedEvent);

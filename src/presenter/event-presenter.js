@@ -1,6 +1,6 @@
 import EventView from '../view/event-view';
 import EditEventView from '../view/edit-event-view';
-import {render, replace} from '../framework/render';
+import {render, replace, remove} from '../framework/render';
 
 export class EventPresenter {
   #event;
@@ -76,6 +76,11 @@ export class EventPresenter {
 
   resetView() {
     this.swapToEvent();
+  }
+
+  destroy() {
+    remove(this.eventView);
+    remove(this.editEventView);
   }
 
   #favoriteClickHandler() {
