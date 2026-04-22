@@ -40,10 +40,12 @@ export class EventPresenter {
       }
     );
     this.editEventView = new EditEventView(
-      this.#offersModel.getByType(this.#event.type),
-      this.#destinationsModel.getById(this.#event.destination),
-      this.#event,
-      () => this.swapToEvent(),
+      {
+        editingEvent: this.#event,
+        destinations: this.#destinationsModel.getDestinations(),
+        offersModel: this.#offersModel,
+        onSubmit: (updatedEvent) => this.#handleEditFormSubmit(updatedEvent),
+      }
     );
 
     if (prevEventView === undefined || prevEditEventView === undefined) {
@@ -88,5 +90,10 @@ export class EventPresenter {
       ...this.#event,
       isFavorite: !this.#event.isFavorite,
     });
+  }
+
+  #handleEditFormSubmit(updatedEvent) {
+    this.#handleDataChange(updatedEvent);
+    this.swapToEvent();
   }
 }

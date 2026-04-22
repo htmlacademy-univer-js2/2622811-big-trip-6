@@ -3,9 +3,10 @@ import {EventsModel} from './model/events-model';
 import {OffersModel} from './model/offers-model';
 import {DestinationsModel} from './model/destinations-model';
 import {createRandomEvent} from './mock/event-mock';
+import {EVENT_TYPES} from './types.js';
 
-const events = ['taxi', 'flight', 'restaurant', 'taxi', 'flight'].map(createRandomEvent);
-const destinationsModel = new DestinationsModel(events.map((e) => e.destination));
+const events = EVENT_TYPES.map(createRandomEvent);
+const destinationsModel = new DestinationsModel();
 const offersModel = new OffersModel(events.map((e) => ({type: e.type, offerIds: e.offers})));
 const eventsModel = new EventsModel(events);
 

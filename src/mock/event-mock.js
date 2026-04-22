@@ -1,6 +1,54 @@
 import dayjs from 'dayjs';
 import {getRandomElement, getRandomNumber} from '../utils';
 
+export const DESTINATIONS = [
+  {
+    id: crypto.randomUUID(),
+    name: 'Amsterdam',
+    description: 'Amsterdam is a vibrant city with canals, cozy cafes, and museums around every corner.',
+    pictures: [
+      {
+        src: 'https://picsum.photos/300/200?random=11',
+        description: 'Amsterdam canal'
+      },
+      {
+        src: 'https://picsum.photos/300/200?random=12',
+        description: 'Amsterdam street'
+      }
+    ]
+  },
+  {
+    id: crypto.randomUUID(),
+    name: 'Geneva',
+    description: 'Geneva offers lakeside views, neat old streets, and calm promenades near the water.',
+    pictures: [
+      {
+        src: 'https://picsum.photos/300/200?random=21',
+        description: 'Geneva lake'
+      },
+      {
+        src: 'https://picsum.photos/300/200?random=22',
+        description: 'Geneva old town'
+      }
+    ]
+  },
+  {
+    id: crypto.randomUUID(),
+    name: 'Chamonix',
+    description: 'Chamonix is a mountain town with snowy peaks, scenic trails, and a lively alpine center.',
+    pictures: [
+      {
+        src: 'https://picsum.photos/300/200?random=31',
+        description: 'Chamonix mountains'
+      },
+      {
+        src: 'https://picsum.photos/300/200?random=32',
+        description: 'Chamonix street'
+      }
+    ]
+  }
+];
+
 function createRandomSchedule() {
   const start = dayjs('2019-03-18')
     .add(getRandomNumber(-3, 7), 'day')
@@ -18,13 +66,12 @@ function createRandomSchedule() {
 }
 
 export function createRandomEvent(type) {
-
   return {
     id: crypto.randomUUID(),
     ...createRandomSchedule(),
     type,
     price: Math.round(Math.random() * 100),
-    destination: crypto.randomUUID(),
+    destination: getRandomElement(DESTINATIONS).id,
     offers: Array.from({ length: Math.round(Math.random() * 3) + 1 }, () => crypto.randomUUID()),
     isFavorite: false,
   };
@@ -40,19 +87,5 @@ export function createOffers(type, ids) {
         price: Math.round(Math.random() * 100)
       })
     )
-  };
-}
-
-export function createDestination(id) {
-  return {
-    id,
-    description: 'Chamonix, is a beautiful city, a true asian pearl, with crowded streets.',
-    name: 'Chamonix',
-    pictures: [
-      {
-        'src': 'http://picsum.photos/300/200?r=0.0762563005163317',
-        'description': 'Chamonix parliament building'
-      }
-    ]
   };
 }

@@ -1,20 +1,45 @@
 import dayjs from 'dayjs';
-import AbstractView from '../framework/view/abstract-view';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
+import {EVENT_TYPES} from '../types.js';
 
-const EVENT_TYPES = ['taxi', 'bus', 'train', 'ship', 'drive', 'flight', 'check-in', 'sightseeing', 'restaurant'];
+function parseDateTime(value) {
+  const [datePart = '', timePart = ''] = value.split(' ');
+  const [day, month, year] = datePart.split('/').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
 
-function createEditEventTemplate({id, type = EVENT_TYPES[0], price, start, end, offers: selectedOffers}, offers, destination) {
+  if ([day, month, year, hours, minutes].some(Number.isNaN)) {
+    return null;
+  }
+
+  return new Date(2000 + year, month - 1, day, hours, minutes);
+}
+
+function createEditEventTemplate(state) {
+  const {
+    id,
+    type = EVENT_TYPES[0],
+    price,
+    start,
+    end,
+    offers: selectedOffers,
+    availableOffers,
+    destination,
+    destinations,
+  } = state;
+
   const startTime = dayjs(start).format('DD/MM/YY HH:mm');
   const endTime = dayjs(end).format('DD/MM/YY HH:mm');
 
-  const eventTypesTemplate = EVENT_TYPES.map((t) => `
+  const eventTypesTemplate = EVENT_TYPES.map((eventType) => `
     <div class="event__type-item">
-      <input id="event-type-${t}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${t}" ${t === type ? 'checked' : ''}>
-      <label class="event__type-label  event__type-label--${t}" for="event-type-${t}-1">${t}</label>
+      <input id="event-type-${eventType}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${eventType}" ${eventType === type ? 'checked' : ''}>
+      <label class="event__type-label  event__type-label--${eventType}" for="event-type-${eventType}-1">${eventType}</label>
     </div>
   `).join('');
 
-  const offersTemplate = offers.map(({id: offerId, title: offerTitle, price: offerPrice}) => `
+  const destinationOptionsTemplate = destinations.map(({name}) => `<option value="${name}"></option>`).join('');
+
+  const offersTemplate = availableOffers.map(({id: offerId, title: offerTitle, price: offerPrice}) => `
     <div class="event__offer-selector">
       <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerId}"
              type="checkbox" name="event-offer-${offerId}" ${selectedOffers?.includes(offerId) ? 'checked' : ''}>
@@ -28,7 +53,7 @@ function createEditEventTemplate({id, type = EVENT_TYPES[0], price, start, end, 
 
   const destinationPhotosTemplate = destination?.pictures.map(({src, description}) => `
     <img class="event__photo" src="${src}" alt="${description}">
-  `);
+  `).join('');
 
   return `
       <form class="event event--edit" action="#" method="post">
@@ -53,11 +78,9 @@ function createEditEventTemplate({id, type = EVENT_TYPES[0], price, start, end, 
             <label class="event__label  event__type-output" for="event-destination-1">
               ${type}
             </label>
-            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination?.name}" list="destination-list-1">
+            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination?.name ?? ''}" list="destination-list-1">
             <datalist id="destination-list-1">
-              <option value="Amsterdam"></option>
-              <option value="Geneva"></option>
-              <option value="Chamonix"></option>
+              ${destinationOptionsTemplate}
             </datalist>
           </div>
 
@@ -91,38 +114,127 @@ function createEditEventTemplate({id, type = EVENT_TYPES[0], price, start, end, 
               ${offersTemplate}
             </div>
           </section>
-
-          <section class="event__section  event__section--destination">
+          ${destination ? `<section class="event__section  event__section--destination">
             <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-            <p class="event__destination-description">${destination?.description}</p>
+            <p class="event__destination-description">${destination.description}</p>
 
             <div class="event__photos-container">
               <div class="event__photos-tape">
                 ${destinationPhotosTemplate}
               </div>
             </div>
-          </section>
+          </section>` : ''}
         </section>
       </form>`;
 }
 
-export default class EditEventView extends AbstractView {
-  #editingEvent;
-  #offers;
-  #destination;
+function parseState(editingEvent, destinations, availableOffers) {
+  const currentDestination = destinations.find(({id}) => id === editingEvent.destination);
 
-  constructor(offers, destination, editingEvent = null, onSubmit = () => {}) {
+  return {
+    ...editingEvent,
+    date: editingEvent.date ? dayjs(editingEvent.date).toDate() : null,
+    start: editingEvent.start ? dayjs(editingEvent.start).toDate() : null,
+    end: editingEvent.end ? dayjs(editingEvent.end).toDate() : null,
+    destinations,
+    availableOffers,
+    destination: currentDestination,
+  };
+}
+
+export default class EditEventView extends AbstractStatefulView {
+  #destinations;
+  #offersModel;
+  #onSubmit;
+
+  constructor({editingEvent = null, destinations = [], offersModel, onSubmit = () => {}} = {}) {
     super();
-    this.#offers = offers;
-    this.#destination = destination;
-    this.#editingEvent = editingEvent;
-    this.element.addEventListener('submit', onSubmit);
-    if (editingEvent) {
-      this.element.querySelector('.event__rollup-btn').addEventListener('click', onSubmit);
-    }
+
+    this.#destinations = destinations;
+    this.#offersModel = offersModel;
+    this.#onSubmit = onSubmit;
+
+    this._setState(parseState(
+      editingEvent ?? {},
+      this.#destinations,
+      this.#offersModel?.getByType(editingEvent?.type) ?? []
+    ));
+
+    this._restoreHandlers();
   }
 
   get template() {
-    return createEditEventTemplate(this.#editingEvent ?? {}, this.#offers, this.#destination);
+    return createEditEventTemplate(this._state);
   }
+
+  get editedEvent() {
+    const form = this.element;
+    const destinationName = form.querySelector('.event__input--destination').value;
+    const selectedDestination = this.#destinations.find(({name}) => name === destinationName) ?? null;
+    const start = parseDateTime(form.querySelector('#event-start-time-1').value);
+    const end = parseDateTime(form.querySelector('#event-end-time-1').value);
+    const {
+      availableOffers,
+      destination: currentDestination,
+      ...event
+    } = this._state;
+
+    return {
+      ...event,
+      destination: selectedDestination?.id ?? currentDestination?.id,
+      offers: availableOffers
+        .filter(({id}) => form.querySelector(`#event-offer-${id}`)?.checked)
+        .map(({id}) => id),
+      price: Number(form.querySelector('#event-price-1').value),
+      start: start ?? this._state.start,
+      end: end ?? this._state.end,
+      date: start ? dayjs(start).startOf('day').toDate() : this._state.date,
+    };
+  }
+
+  _restoreHandlers() {
+    this.element.addEventListener('submit', this.#submitHandler);
+    this.element.querySelector('.event__type-group').addEventListener('change', this.#typeChangeHandler);
+    this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+
+    const rollupButton = this.element.querySelector('.event__rollup-btn');
+    rollupButton?.addEventListener('click', this.#rollupClickHandler);
+  }
+
+  #submitHandler = (evt) => {
+    evt.preventDefault();
+    this.#onSubmit(this.editedEvent);
+  };
+
+  #rollupClickHandler = () => {
+    this.#onSubmit(this.editedEvent);
+  };
+
+  #typeChangeHandler = (evt) => {
+    if (!evt.target.matches('.event__type-input')) {
+      return;
+    }
+
+    this.updateElement({
+      type: evt.target.value,
+      offers: [],
+      availableOffers: this.#offersModel?.getByType(evt.target.value) ?? [],
+    });
+  };
+
+  #destinationChangeHandler = (evt) => {
+    const selectedDestination = this.#destinations.find(({name}) => name === evt.target.value);
+
+    if (!selectedDestination) {
+      this.updateElement({
+        destination: null,
+      });
+
+      return;
+    }
+
+    this.updateElement({
+      destination: selectedDestination,
+    });
+  };
 }
