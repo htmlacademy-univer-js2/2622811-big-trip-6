@@ -9,6 +9,8 @@ export class FilterPresenter {
   constructor({filterModel, filterContainer}) {
     this.#filterModel = filterModel;
     this.#filterContainer = filterContainer;
+
+    this.#filterModel.addObserver(this.#handleFilterChange);
   }
 
   init() {
@@ -32,5 +34,9 @@ export class FilterPresenter {
     }
 
     this.#filterModel.setFilter(filterType);
+  };
+
+  #handleFilterChange = () => {
+    this.init();
   };
 }

@@ -18,4 +18,8 @@ export class EventsModel {
   updateEvent(updatedEvent) {
     this.#events[updatedEvent.id] = updatedEvent;
   }
+
+  deleteEvent(eventId) {
+    delete this.#events[eventId];
+  }
 }

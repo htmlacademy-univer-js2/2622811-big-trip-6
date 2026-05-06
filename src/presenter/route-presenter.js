@@ -3,7 +3,8 @@ import SortView from '../view/sort-view';
 import EmptyMessageView from '../view/empty-message-view';
 import {render, RenderPosition, remove} from '../framework/render';
 import {EventPresenter} from './event-presenter';
-import {FilterType, SortType} from '../types';
+import {NewEventPresenter} from './new-event-presenter';
+import {FilterType, SortType, UserAction} from '../types';
 
 const sortEventsByDay = (eventA, eventB) =>
   new Date(eventA.start).getTime() - new Date(eventB.start).getTime();
@@ -31,6 +32,7 @@ export class RoutePresenter {
   #eventsView = new EventsView();
   #sortView = null;
   #emptyMessageView = null;
+  #newEventPresenter = null;
 
   constructor({eventsModel, offersModel, destinationsModel, filterModel}) {
     this.#eventsModel = eventsModel;
@@ -70,7 +72,7 @@ export class RoutePresenter {
       const presenter = new EventPresenter({
         offersModel: this.#offersModel,
         destinationsModel: this.#destinationsModel,
-        onDataChange: this.#handleEventChange,
+        onDataChange: this.#handleUserAction,
         onModeChange: this.#handleModeChange,
       });
 
@@ -129,6 +131,28 @@ export class RoutePresenter {
     this.#renderEvents();
   }
 
+  createEvent() {
+    if (this.#newEventPresenter !== null) {
+      return;
+    }
+
+    this.#currentSortType = SortType.DAY;
+    this.#handleModeChange();
+    this.#filterModel.setFilter(FilterType.EVERYTHING);
+    remove(this.#emptyMessageView);
+    this.#emptyMessageView = null;
+
+    this.#newEventPresenter = new NewEventPresenter({
+      eventsContainer: this.#eventsView.element,
+      offersModel: this.#offersModel,
+      destinationsModel: this.#destinationsModel,
+      onDataChange: this.#handleUserAction,
+      onDestroy: this.#handleNewEventDestroy,
+    });
+
+    this.#newEventPresenter.init();
+  }
+
   #handleSortTypeChange = (sortType) => {
     if (this.#currentSortType === sortType) {
       return;
@@ -146,16 +170,40 @@ export class RoutePresenter {
     this.#renderRoute();
   };
 
-  #handleEventChange = (updatedEvent) => {
-    this.#eventsModel.updateEvent(updatedEvent);
+  #handleUserAction = (actionType, update) => {
+    switch (actionType) {
+      case UserAction.UPDATE_EVENT:
+        this.#eventsModel.updateEvent(update);
+        break;
+      case UserAction.ADD_EVENT:
+        this.#destroyNewEvent();
+        this.#eventsModel.updateEvent(update);
+        break;
+      case UserAction.DELETE_EVENT:
+        this.#eventsModel.deleteEvent(update.id);
+        break;
+    }
 
-    const presenter = this.#eventPresenters[updatedEvent.id];
-    presenter?.init(this.#eventsView, updatedEvent);
+    this.#renderRoute();
   };
 
   #handleModeChange = () => {
+    this.#destroyNewEvent();
     Object.values(this.#eventPresenters).forEach((presenter) =>
       presenter.resetView(),
     );
+  };
+
+  #destroyNewEvent() {
+    this.#newEventPresenter?.destroy();
+    this.#newEventPresenter = null;
+  }
+
+  #handleNewEventDestroy = () => {
+    this.#newEventPresenter = null;
+
+    if (this.#eventsModel.getEvents().length === 0) {
+      this.#renderRoute();
+    }
   };
 }

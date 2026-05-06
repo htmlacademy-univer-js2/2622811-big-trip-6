@@ -5,6 +5,7 @@ import {RoutePresenter} from './route-presenter';
 export class PagePresenter {
   #eventsModel;
   #routePresenter;
+  #newEventButton = document.querySelector('.trip-main__event-add-btn');
 
   constructor({ eventsModel, offersModel, destinationsModel, filterModel }) {
     this.#eventsModel = eventsModel;
@@ -21,6 +22,7 @@ export class PagePresenter {
       this.#renderInfo();
     }
 
+    this.#newEventButton.addEventListener('click', this.#handleNewEventButtonClick);
     this.#routePresenter.init();
   }
 
@@ -38,4 +40,7 @@ export class PagePresenter {
     );
   }
 
+  #handleNewEventButtonClick = () => {
+    this.#routePresenter.createEvent();
+  };
 }
