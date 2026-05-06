@@ -5,8 +5,8 @@ import LoadingMessageView from '../view/loading-message-view';
 import FailedLoadMessageView from '../view/failed-load-message-view';
 import {render, RenderPosition, remove} from '../framework/render';
 import UiBlocker from '../framework/ui-blocker/ui-blocker';
-import {EventPresenter} from './event-presenter';
-import {NewEventPresenter} from './new-event-presenter';
+import EventPresenter from './event-presenter';
+import NewEventPresenter from './new-event-presenter';
 import {FilterType, SortType, UserAction} from '../types';
 import {filter} from '../utils/filter';
 
@@ -24,7 +24,7 @@ const sortEventsByTime = (eventA, eventB) =>
 
 const sortEventsByPrice = (eventA, eventB) => eventB.price - eventA.price;
 
-export class RoutePresenter {
+export default class RoutePresenter {
   #eventsModel;
   #offersModel;
   #destinationsModel;
@@ -44,6 +44,8 @@ export class RoutePresenter {
     lowerLimit: TimeLimit.LOWER_LIMIT,
     upperLimit: TimeLimit.UPPER_LIMIT,
   });
+
+  #container = document.querySelector('.trip-events');
 
   constructor({
     eventsModel,
@@ -93,7 +95,7 @@ export class RoutePresenter {
 
     render(
       this.#sortView,
-      document.querySelector('.trip-events'),
+      this.#container,
       RenderPosition.AFTERBEGIN,
     );
   }
@@ -116,7 +118,7 @@ export class RoutePresenter {
 
   #renderEmptyMessage() {
     this.#emptyMessageView = new EmptyMessageView(this.#filterModel.getFilter());
-    render(this.#emptyMessageView, document.querySelector('.trip-events'));
+    render(this.#emptyMessageView, this.#container);
   }
 
   #renderLoadingMessage() {
@@ -125,7 +127,7 @@ export class RoutePresenter {
     }
 
     this.#loadingMessageView = new LoadingMessageView();
-    render(this.#loadingMessageView, document.querySelector('.trip-events'));
+    render(this.#loadingMessageView, this.#container);
   }
 
   #renderFailedLoadMessage() {
@@ -134,7 +136,7 @@ export class RoutePresenter {
     }
 
     this.#failedLoadMessageView = new FailedLoadMessageView();
-    render(this.#failedLoadMessageView, document.querySelector('.trip-events'));
+    render(this.#failedLoadMessageView, this.#container);
   }
 
   #renderEventsView() {
@@ -142,7 +144,7 @@ export class RoutePresenter {
       return;
     }
 
-    render(this.#eventsView, document.querySelector('.trip-events'));
+    render(this.#eventsView, this.#container);
     this.#isEventsViewRendered = true;
   }
 

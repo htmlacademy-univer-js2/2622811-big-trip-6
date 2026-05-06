@@ -3,7 +3,9 @@ import EditEventView from '../view/edit-event-view';
 import {render, replace, remove} from '../framework/render';
 import {UserAction} from '../types';
 
-export class EventPresenter {
+export default class EventPresenter {
+  #eventView;
+  #editEventView;
   #event;
   #offersModel;
   #destinationsModel;
@@ -28,10 +30,10 @@ export class EventPresenter {
     this.#event = event;
     this.#eventsContainer = eventsView.element;
 
-    const prevEventView = this.eventView;
-    const prevEditEventView = this.editEventView;
+    const prevEventView = this.#eventView;
+    const prevEditEventView = this.#editEventView;
 
-    this.eventView = new EventView(
+    this.#eventView = new EventView(
       this.#event,
       this.#event.offers.map((id) => this.#offersModel.getById(id)),
       this.#destinationsModel.getById(this.#event.destination),
@@ -40,7 +42,7 @@ export class EventPresenter {
         onFavoriteClick: () => this.#favoriteClickHandler(),
       }
     );
-    this.editEventView = new EditEventView(
+    this.#editEventView = new EditEventView(
       {
         editingEvent: this.#event,
         destinations: this.#destinationsModel.getDestinations(),
@@ -52,11 +54,11 @@ export class EventPresenter {
     );
 
     if (prevEventView === undefined || prevEditEventView === undefined) {
-      render(this.eventView, this.#eventsContainer);
+      render(this.#eventView, this.#eventsContainer);
     } else if (this.#isEditing) {
-      replace(this.editEventView, prevEditEventView);
+      replace(this.#editEventView, prevEditEventView);
     } else {
-      replace(this.eventView, prevEventView);
+      replace(this.#eventView, prevEventView);
     }
   }
 
@@ -65,7 +67,7 @@ export class EventPresenter {
       return;
     }
     this.#handleModeChange();
-    replace(this.editEventView, this.eventView);
+    replace(this.#editEventView, this.#eventView);
     this.#isEditing = true;
     document.addEventListener('keyup', this.#escKeyDownHandler);
   }
@@ -74,8 +76,8 @@ export class EventPresenter {
     if(!this.#isEditing) {
       return;
     }
-    replace(this.eventView, this.editEventView);
-    this.editEventView.reset();
+    replace(this.#eventView, this.#editEventView);
+    this.#editEventView.reset();
     this.#isEditing = false;
     document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
@@ -85,8 +87,8 @@ export class EventPresenter {
   }
 
   destroy() {
-    remove(this.eventView);
-    remove(this.editEventView);
+    remove(this.#eventView);
+    remove(this.#editEventView);
     document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
 
@@ -97,29 +99,29 @@ export class EventPresenter {
         isFavorite: !this.#event.isFavorite,
       });
     } catch {
-      this.eventView.shake();
+      this.#eventView.shake();
     }
   };
 
   #handleEditFormSubmit = async (updatedEvent) => {
-    this.editEventView.setSaving();
+    this.#editEventView.setSaving();
 
     try {
       await this.#handleDataChange(UserAction.UPDATE_EVENT, updatedEvent);
     } catch {
-      this.editEventView.resetControls();
-      this.editEventView.shake();
+      this.#editEventView.resetControls();
+      this.#editEventView.shake();
     }
   };
 
   #handleDeleteClick = async (deletedEvent) => {
-    this.editEventView.setDeleting();
+    this.#editEventView.setDeleting();
 
     try {
       await this.#handleDataChange(UserAction.DELETE_EVENT, deletedEvent);
     } catch {
-      this.editEventView.resetControls();
-      this.editEventView.shake();
+      this.#editEventView.resetControls();
+      this.#editEventView.shake();
     }
   };
 }

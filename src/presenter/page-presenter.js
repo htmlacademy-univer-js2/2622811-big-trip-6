@@ -1,9 +1,10 @@
 import dayjs from 'dayjs';
 import InfoView from '../view/info-view';
 import {render, RenderPosition, remove} from '../framework/render';
-import {RoutePresenter} from './route-presenter';
+import RoutePresenter from './route-presenter';
+import {encode} from '../utils/escape';
 
-export class PagePresenter {
+export default class PagePresenter {
   #eventsModel;
   #offersModel;
   #destinationsModel;
@@ -67,10 +68,10 @@ export class PagePresenter {
       .filter(Boolean);
 
     if (destinationNames.length > 3) {
-      return `${destinationNames[0]} &mdash; ... &mdash; ${destinationNames[destinationNames.length - 1]}`;
+      return `${encode(destinationNames[0])} &mdash; ... &mdash; ${encode(destinationNames[destinationNames.length - 1])}`;
     }
 
-    return destinationNames.join(' &mdash; ');
+    return destinationNames.map((destinationName) => encode(destinationName)).join(' &mdash; ');
   }
 
   #formatTripDates(events) {

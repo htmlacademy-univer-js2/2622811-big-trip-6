@@ -3,6 +3,7 @@ import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import {EVENT_TYPES} from '../types.js';
+import {encode} from '../utils/escape';
 
 function createEditEventTemplate(state) {
   const {
@@ -27,14 +28,14 @@ function createEditEventTemplate(state) {
     </div>
   `).join('');
 
-  const destinationOptionsTemplate = destinations.map(({name}) => `<option value="${name}"></option>`).join('');
+  const destinationOptionsTemplate = destinations.map(({name}) => `<option value="${encode(name)}"></option>`).join('');
 
   const offersTemplate = availableOffers.map(({id: offerId, title: offerTitle, price: offerPrice}) => `
     <div class="event__offer-selector">
       <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerId}"
              type="checkbox" name="event-offer-${offerId}" ${selectedOffers?.includes(offerId) ? 'checked' : ''}>
       <label class="event__offer-label" for="event-offer-${offerId}">
-        <span class="event__offer-title">${offerTitle}</span>
+        <span class="event__offer-title">${encode(offerTitle)}</span>
         &plus;&euro;&nbsp;
         <span class="event__offer-price">${offerPrice}</span>
       </label>
@@ -42,7 +43,7 @@ function createEditEventTemplate(state) {
   `).join('');
 
   const destinationPhotosTemplate = destination?.pictures.map(({src, description}) => `
-    <img class="event__photo" src="${src}" alt="${description}">
+    <img class="event__photo" src="${encode(src)}" alt="${encode(description)}">
   `).join('');
 
   return `
@@ -52,7 +53,7 @@ function createEditEventTemplate(state) {
           <div class="event__type-wrapper">
             <label class="event__type  event__type-btn" for="event-type-toggle-1">
               <span class="visually-hidden">Choose event type</span>
-              <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
+              <img class="event__type-icon" width="17" height="17" src="img/icons/${encode(type)}.png" alt="Event type icon">
             </label>
             <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
 
@@ -67,9 +68,9 @@ function createEditEventTemplate(state) {
 
           <div class="event__field-group  event__field-group--destination">
             <label class="event__label  event__type-output" for="event-destination-1">
-              ${type}
+              ${encode(type)}
             </label>
-            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destination?.name ?? ''}" list="destination-list-1">
+            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${encode(destination?.name)}" list="destination-list-1">
             <datalist id="destination-list-1">
               ${destinationOptionsTemplate}
             </datalist>
@@ -107,7 +108,7 @@ function createEditEventTemplate(state) {
           </section>` : ''}
           ${destination?.description ? `<section class="event__section  event__section--destination">
             <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-            <p class="event__destination-description">${destination.description}</p>
+            <p class="event__destination-description">${encode(destination.description)}</p>
             ${destination.pictures.length > 0 ? `<div class="event__photos-container">
               <div class="event__photos-tape">
                 ${destinationPhotosTemplate}

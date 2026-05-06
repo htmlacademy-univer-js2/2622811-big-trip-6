@@ -16,7 +16,7 @@ const generateFilterItems = (events) => Object.values(FilterType).map((filterTyp
   disabled: filter[filterType](events).length === 0,
 }));
 
-export class FilterPresenter {
+export default class FilterPresenter {
   #eventsModel;
   #filterModel;
   #filterContainer;

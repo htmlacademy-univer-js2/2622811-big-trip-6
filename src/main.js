@@ -1,13 +1,13 @@
-import {PagePresenter} from './presenter/page-presenter';
-import {EventsModel} from './model/events-model';
-import {OffersModel} from './model/offers-model';
-import {DestinationsModel} from './model/destinations-model';
-import {FilterModel} from './model/filter-model';
-import {FilterPresenter} from './presenter/filter-presenter';
-import {EventsApiService} from './events-api-service.js';
+import PagePresenter from './presenter/page-presenter';
+import EventsModel from './model/events-model';
+import OffersModel from './model/offers-model';
+import DestinationsModel from './model/destinations-model';
+import FilterModel from './model/filter-model';
+import FilterPresenter from './presenter/filter-presenter';
+import EventsApiService from './events-api-service.js';
 
 if (localStorage.getItem('token') === null) {
-  localStorage.setItem('token', crypto.randomUUID());
+  localStorage.setItem('token', Math.random().toString(36).substring(2));
 }
 
 const ENDPOINT = 'https://24.objects.htmlacademy.pro/big-trip';

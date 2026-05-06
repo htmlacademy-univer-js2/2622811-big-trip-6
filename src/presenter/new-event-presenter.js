@@ -13,7 +13,7 @@ const DEFAULT_EVENT = {
   isFavorite: false,
 };
 
-export class NewEventPresenter {
+export default class NewEventPresenter {
   #eventsContainer = null;
   #offersModel;
   #destinationsModel;
