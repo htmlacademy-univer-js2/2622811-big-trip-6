@@ -1,6 +1,8 @@
 import EventsView from '../view/events-view';
 import SortView from '../view/sort-view';
 import EmptyMessageView from '../view/empty-message-view';
+import LoadingMessageView from '../view/loading-message-view';
+import FailedLoadMessageView from '../view/failed-load-message-view';
 import {render, RenderPosition, remove} from '../framework/render';
 import {EventPresenter} from './event-presenter';
 import {NewEventPresenter} from './new-event-presenter';
@@ -32,7 +34,10 @@ export class RoutePresenter {
   #eventsView = new EventsView();
   #sortView = null;
   #emptyMessageView = null;
+  #loadingMessageView = null;
+  #failedLoadMessageView = null;
   #newEventPresenter = null;
+  #isEventsViewRendered = false;
 
   constructor({eventsModel, offersModel, destinationsModel, filterModel}) {
     this.#eventsModel = eventsModel;
@@ -41,10 +46,23 @@ export class RoutePresenter {
     this.#filterModel = filterModel;
 
     this.#filterModel.addObserver(this.#handleFilterChange);
+    this.#eventsModel.addObserver(this.#handleModelChange);
+    this.#offersModel.addObserver(this.#handleModelChange);
+    this.#destinationsModel.addObserver(this.#handleModelChange);
   }
 
   init() {
-    render(this.#eventsView, document.querySelector('.trip-events'));
+    if (this.#hasLoadingError()) {
+      this.#renderFailedLoadMessage();
+      return;
+    }
+
+    if (!this.#isDataLoaded()) {
+      this.#renderLoadingMessage();
+      return;
+    }
+
+    this.#renderEventsView();
 
     if (this.#getFilteredEvents().length === 0) {
       this.#renderEmptyMessage();
@@ -86,6 +104,33 @@ export class RoutePresenter {
     render(this.#emptyMessageView, document.querySelector('.trip-events'));
   }
 
+  #renderLoadingMessage() {
+    if (this.#loadingMessageView !== null) {
+      return;
+    }
+
+    this.#loadingMessageView = new LoadingMessageView();
+    render(this.#loadingMessageView, document.querySelector('.trip-events'));
+  }
+
+  #renderFailedLoadMessage() {
+    if (this.#failedLoadMessageView !== null) {
+      return;
+    }
+
+    this.#failedLoadMessageView = new FailedLoadMessageView();
+    render(this.#failedLoadMessageView, document.querySelector('.trip-events'));
+  }
+
+  #renderEventsView() {
+    if (this.#isEventsViewRendered) {
+      return;
+    }
+
+    render(this.#eventsView, document.querySelector('.trip-events'));
+    this.#isEventsViewRendered = true;
+  }
+
   #clearEventsList() {
     for (const key in this.#eventPresenters) {
       this.#eventPresenters[key].destroy();
@@ -94,6 +139,13 @@ export class RoutePresenter {
     this.#eventPresenters = {};
     remove(this.#emptyMessageView);
     this.#emptyMessageView = null;
+  }
+
+  #clearMessages() {
+    remove(this.#loadingMessageView);
+    remove(this.#failedLoadMessageView);
+    this.#loadingMessageView = null;
+    this.#failedLoadMessageView = null;
   }
 
   #getSortedEvents() {
@@ -117,10 +169,35 @@ export class RoutePresenter {
     return filter[filterType](events);
   }
 
+  #isDataLoaded() {
+    return this.#eventsModel.isLoaded &&
+      this.#offersModel.isLoaded &&
+      this.#destinationsModel.isLoaded;
+  }
+
+  #hasLoadingError() {
+    return this.#eventsModel.isFailed ||
+      this.#offersModel.isFailed ||
+      this.#destinationsModel.isFailed;
+  }
+
   #renderRoute() {
     this.#clearEventsList();
     remove(this.#sortView);
     this.#sortView = null;
+
+    if (this.#hasLoadingError()) {
+      this.#clearMessages();
+      this.#renderFailedLoadMessage();
+      return;
+    }
+
+    if (!this.#isDataLoaded()) {
+      return;
+    }
+
+    this.#clearMessages();
+    this.#renderEventsView();
 
     if (this.#getFilteredEvents().length === 0) {
       this.#renderEmptyMessage();
@@ -132,7 +209,7 @@ export class RoutePresenter {
   }
 
   createEvent() {
-    if (this.#newEventPresenter !== null) {
+    if (this.#newEventPresenter !== null || !this.#isDataLoaded() || this.#hasLoadingError()) {
       return;
     }
 
@@ -170,21 +247,27 @@ export class RoutePresenter {
     this.#renderRoute();
   };
 
-  #handleUserAction = (actionType, update) => {
-    switch (actionType) {
-      case UserAction.UPDATE_EVENT:
-        this.#eventsModel.updateEvent(update);
-        break;
-      case UserAction.ADD_EVENT:
-        this.#destroyNewEvent();
-        this.#eventsModel.updateEvent(update);
-        break;
-      case UserAction.DELETE_EVENT:
-        this.#eventsModel.deleteEvent(update.id);
-        break;
-    }
-
+  #handleModelChange = () => {
     this.#renderRoute();
+  };
+
+  #handleUserAction = async (actionType, update) => {
+    try {
+      switch (actionType) {
+        case UserAction.UPDATE_EVENT:
+          await this.#eventsModel.updateEvent(update);
+          break;
+        case UserAction.ADD_EVENT:
+          await this.#eventsModel.addEvent(update);
+          this.#destroyNewEvent();
+          break;
+        case UserAction.DELETE_EVENT:
+          await this.#eventsModel.deleteEvent(update.id);
+          break;
+      }
+    } catch {
+      // ignore
+    }
   };
 
   #handleModeChange = () => {

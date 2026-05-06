@@ -3,14 +3,21 @@ import {EventsModel} from './model/events-model';
 import {OffersModel} from './model/offers-model';
 import {DestinationsModel} from './model/destinations-model';
 import {FilterModel} from './model/filter-model';
-import {createRandomEvent} from './mock/event-mock';
-import {EVENT_TYPES} from './types.js';
 import {FilterPresenter} from './presenter/filter-presenter';
+import {EventsApiService} from './events-api-service.js';
 
-const events = EVENT_TYPES.map(createRandomEvent);
-const destinationsModel = new DestinationsModel();
-const offersModel = new OffersModel(events.map((e) => ({type: e.type, offerIds: e.offers})));
-const eventsModel = new EventsModel(events);
+if (localStorage.getItem('token') === null) {
+  localStorage.setItem('token', crypto.randomUUID());
+}
+
+const ENDPOINT = 'https://24.objects.htmlacademy.pro/big-trip';
+const AUTHORIZATION = `Basic ${localStorage.getItem('token')}`;
+
+const apiService = new EventsApiService(ENDPOINT, AUTHORIZATION);
+
+const destinationsModel = new DestinationsModel({apiService});
+const offersModel = new OffersModel({apiService});
+const eventsModel = new EventsModel({apiService});
 const filterModel = new FilterModel();
 
 const filterPresenter = new FilterPresenter({

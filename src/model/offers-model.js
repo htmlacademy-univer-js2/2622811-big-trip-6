@@ -1,13 +1,40 @@
-import {createOffers} from '../mock/event-mock';
+import Observable from '../framework/observable';
 
-export class OffersModel {
+export class OffersModel extends Observable {
+  #apiService = null;
   #offersByType = {};
   #offersById = {};
+  #isLoaded = false;
+  #isFailed = false;
 
-  constructor(eventTypesWithOfferIds = []) {
-    for (const {type, offerIds} of eventTypesWithOfferIds) {
-      const {offers} = createOffers(type, offerIds);
+  constructor({apiService}) {
+    super();
+    this.#apiService = apiService;
+    apiService.getOffers().then((offerTypes) => {
+      this.setOffers(offerTypes);
+    }).catch(() => {
+      this.#isFailed = true;
+      this.setOffers([]);
+    });
+  }
 
+  getOffers() {
+    return Object.values(this.#offersByType);
+  }
+
+  get isLoaded() {
+    return this.#isLoaded;
+  }
+
+  get isFailed() {
+    return this.#isFailed;
+  }
+
+  setOffers(offerTypes) {
+    this.#offersByType = {};
+    this.#offersById = {};
+
+    for (const {type, offers} of offerTypes) {
       this.#offersByType[type] = offers;
 
       offers.reduce((acc, offer) => {
@@ -15,10 +42,9 @@ export class OffersModel {
         return acc;
       }, this.#offersById);
     }
-  }
 
-  getOffers() {
-    return Object.values(this.#offersByType);
+    this.#isLoaded = true;
+    this._notify();
   }
 
   getById(id) {
