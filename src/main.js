@@ -21,6 +21,7 @@ const eventsModel = new EventsModel({apiService});
 const filterModel = new FilterModel();
 
 const filterPresenter = new FilterPresenter({
+  eventsModel,
   filterModel,
   filterContainer: document.querySelector('.trip-controls__filters'),
 });

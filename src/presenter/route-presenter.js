@@ -8,6 +8,7 @@ import UiBlocker from '../framework/ui-blocker/ui-blocker';
 import {EventPresenter} from './event-presenter';
 import {NewEventPresenter} from './new-event-presenter';
 import {FilterType, SortType, UserAction} from '../types';
+import {filter} from '../utils/filter';
 
 const TimeLimit = {
   LOWER_LIMIT: 350,
@@ -22,13 +23,6 @@ const sortEventsByTime = (eventA, eventB) =>
   (new Date(eventA.end).getTime() - new Date(eventA.start).getTime());
 
 const sortEventsByPrice = (eventA, eventB) => eventB.price - eventA.price;
-
-const filter = {
-  [FilterType.EVERYTHING]: (events) => events,
-  [FilterType.FUTURE]: (events) => events.filter((event) => new Date(event.start) > new Date()),
-  [FilterType.PRESENT]: (events) => events.filter((event) => new Date(event.start) <= new Date() && new Date(event.end) >= new Date()),
-  [FilterType.PAST]: (events) => events.filter((event) => new Date(event.end) < new Date()),
-};
 
 export class RoutePresenter {
   #eventsModel;
