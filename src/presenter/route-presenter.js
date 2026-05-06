@@ -4,9 +4,15 @@ import EmptyMessageView from '../view/empty-message-view';
 import LoadingMessageView from '../view/loading-message-view';
 import FailedLoadMessageView from '../view/failed-load-message-view';
 import {render, RenderPosition, remove} from '../framework/render';
+import UiBlocker from '../framework/ui-blocker/ui-blocker';
 import {EventPresenter} from './event-presenter';
 import {NewEventPresenter} from './new-event-presenter';
 import {FilterType, SortType, UserAction} from '../types';
+
+const TimeLimit = {
+  LOWER_LIMIT: 350,
+  UPPER_LIMIT: 1000,
+};
 
 const sortEventsByDay = (eventA, eventB) =>
   new Date(eventA.start).getTime() - new Date(eventB.start).getTime();
@@ -38,6 +44,10 @@ export class RoutePresenter {
   #failedLoadMessageView = null;
   #newEventPresenter = null;
   #isEventsViewRendered = false;
+  #uiBlocker = new UiBlocker({
+    lowerLimit: TimeLimit.LOWER_LIMIT,
+    upperLimit: TimeLimit.UPPER_LIMIT,
+  });
 
   constructor({eventsModel, offersModel, destinationsModel, filterModel}) {
     this.#eventsModel = eventsModel;
@@ -252,6 +262,8 @@ export class RoutePresenter {
   };
 
   #handleUserAction = async (actionType, update) => {
+    this.#uiBlocker.block();
+
     try {
       switch (actionType) {
         case UserAction.UPDATE_EVENT:
@@ -265,8 +277,8 @@ export class RoutePresenter {
           await this.#eventsModel.deleteEvent(update.id);
           break;
       }
-    } catch {
-      // ignore
+    } finally {
+      this.#uiBlocker.unblock();
     }
   };
 

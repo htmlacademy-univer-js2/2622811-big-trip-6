@@ -63,7 +63,14 @@ export class NewEventPresenter {
     this.#handleDestroy();
   };
 
-  #handleFormSubmit = (newEvent) => {
-    this.#handleDataChange(UserAction.ADD_EVENT, newEvent);
+  #handleFormSubmit = async (newEvent) => {
+    this.#editEventView.setSaving();
+
+    try {
+      await this.#handleDataChange(UserAction.ADD_EVENT, newEvent);
+    } catch {
+      this.#editEventView.resetControls();
+      this.#editEventView.shake();
+    }
   };
 }

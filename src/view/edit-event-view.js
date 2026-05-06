@@ -207,6 +207,22 @@ export default class EditEventView extends AbstractStatefulView {
     super.removeElement();
   }
 
+  setSaving() {
+    this.#setControlsDisabled(true);
+    this.element.querySelector('.event__save-btn').textContent = 'Saving...';
+  }
+
+  setDeleting() {
+    this.#setControlsDisabled(true);
+    this.element.querySelector('.event__reset-btn').textContent = 'Deleting...';
+  }
+
+  resetControls() {
+    this.#setControlsDisabled(false);
+    this.element.querySelector('.event__save-btn').textContent = 'Save';
+    this.element.querySelector('.event__reset-btn').textContent = this._state.id ? 'Delete' : 'Cancel';
+  }
+
   #submitHandler = (evt) => {
     evt.preventDefault();
     this.#onSubmit(this.editedEvent);
@@ -305,4 +321,10 @@ export default class EditEventView extends AbstractStatefulView {
       end: selectedDate,
     });
   };
+
+  #setControlsDisabled(isDisabled) {
+    this.element.querySelectorAll('input, button').forEach((element) => {
+      element.disabled = isDisabled;
+    });
+  }
 }
