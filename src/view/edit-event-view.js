@@ -87,7 +87,7 @@ function createEditEventTemplate(state) {
               <span class="visually-hidden">Price</span>
               &euro;
             </label>
-            <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price ?? 0}">
+            <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" inputmode="numeric" value="${price ?? 0}">
           </div>
 
           <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -136,15 +136,26 @@ export default class EditEventView extends AbstractStatefulView {
   #destinations;
   #offersModel;
   #onSubmit;
+  #onDelete;
+  #onRollup;
   #startDatepicker = null;
   #endDatepicker = null;
 
-  constructor({editingEvent = null, destinations = [], offersModel, onSubmit = () => {}} = {}) {
+  constructor({
+    editingEvent = null,
+    destinations = [],
+    offersModel,
+    onSubmit = () => {},
+    onDelete = () => {},
+    onRollup = () => {},
+  } = {}) {
     super();
 
     this.#destinations = destinations;
     this.#offersModel = offersModel;
     this.#onSubmit = onSubmit;
+    this.#onDelete = onDelete;
+    this.#onRollup = onRollup;
 
     this._setState(parseState(
       editingEvent ?? {},
@@ -181,8 +192,10 @@ export default class EditEventView extends AbstractStatefulView {
 
   _restoreHandlers() {
     this.element.addEventListener('submit', this.#submitHandler);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#deleteClickHandler);
     this.element.querySelector('.event__type-group').addEventListener('change', this.#typeChangeHandler);
     this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
+    this.element.querySelector('.event__input--price').addEventListener('input', this.#priceInputHandler);
     this.#setDatepickers();
 
     const rollupButton = this.element.querySelector('.event__rollup-btn');
@@ -199,8 +212,13 @@ export default class EditEventView extends AbstractStatefulView {
     this.#onSubmit(this.editedEvent);
   };
 
+  #deleteClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#onDelete(this.editedEvent);
+  };
+
   #rollupClickHandler = () => {
-    this.#onSubmit(this.editedEvent);
+    this.#onRollup();
   };
 
   #typeChangeHandler = (evt) => {
@@ -220,7 +238,7 @@ export default class EditEventView extends AbstractStatefulView {
 
     if (!selectedDestination) {
       this.updateElement({
-        destination: null,
+        destination: this._state.destination,
       });
 
       return;
@@ -229,6 +247,10 @@ export default class EditEventView extends AbstractStatefulView {
     this.updateElement({
       destination: selectedDestination,
     });
+  };
+
+  #priceInputHandler = (evt) => {
+    evt.target.value = evt.target.value.replace(/\D/g, '');
   };
 
   #setDatepickers() {

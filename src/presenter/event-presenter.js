@@ -1,6 +1,7 @@
 import EventView from '../view/event-view';
 import EditEventView from '../view/edit-event-view';
 import {render, replace, remove} from '../framework/render';
+import {UserAction} from '../types';
 
 export class EventPresenter {
   #event;
@@ -45,6 +46,8 @@ export class EventPresenter {
         destinations: this.#destinationsModel.getDestinations(),
         offersModel: this.#offersModel,
         onSubmit: (updatedEvent) => this.#handleEditFormSubmit(updatedEvent),
+        onDelete: (deletedEvent) => this.#handleDeleteClick(deletedEvent),
+        onRollup: () => this.swapToEvent(),
       }
     );
 
@@ -83,17 +86,21 @@ export class EventPresenter {
   destroy() {
     remove(this.eventView);
     remove(this.editEventView);
+    document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
 
   #favoriteClickHandler() {
-    this.#handleDataChange({
+    this.#handleDataChange(UserAction.UPDATE_EVENT, {
       ...this.#event,
       isFavorite: !this.#event.isFavorite,
     });
   }
 
   #handleEditFormSubmit(updatedEvent) {
-    this.#handleDataChange(updatedEvent);
-    this.swapToEvent();
+    this.#handleDataChange(UserAction.UPDATE_EVENT, updatedEvent);
+  }
+
+  #handleDeleteClick(deletedEvent) {
+    this.#handleDataChange(UserAction.DELETE_EVENT, deletedEvent);
   }
 }

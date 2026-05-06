@@ -1,18 +1,19 @@
 import InfoView from '../view/info-view';
-import FilterView from '../view/filter-view';
 import {render, RenderPosition} from '../framework/render';
 import {RoutePresenter} from './route-presenter';
 
 export class PagePresenter {
   #eventsModel;
   #routePresenter;
+  #newEventButton = document.querySelector('.trip-main__event-add-btn');
 
-  constructor({ eventsModel, offersModel, destinationsModel }) {
+  constructor({ eventsModel, offersModel, destinationsModel, filterModel }) {
     this.#eventsModel = eventsModel;
     this.#routePresenter = new RoutePresenter({
       eventsModel,
       offersModel,
       destinationsModel,
+      filterModel,
     });
   }
 
@@ -21,7 +22,7 @@ export class PagePresenter {
       this.#renderInfo();
     }
 
-    this.#renderFilter();
+    this.#newEventButton.addEventListener('click', this.#handleNewEventButtonClick);
     this.#routePresenter.init();
   }
 
@@ -39,9 +40,7 @@ export class PagePresenter {
     );
   }
 
-  #renderFilter() {
-    const filterView = new FilterView('everything');
-
-    render(filterView, document.querySelector('.trip-controls__filters'));
-  }
+  #handleNewEventButtonClick = () => {
+    this.#routePresenter.createEvent();
+  };
 }
