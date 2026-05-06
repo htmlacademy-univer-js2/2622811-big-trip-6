@@ -19,6 +19,8 @@ export class PagePresenter {
       offersModel,
       destinationsModel,
       filterModel,
+      onNewEventOpen: this.#handleNewEventOpen,
+      onNewEventClose: this.#handleNewEventClose,
     });
 
     this.#eventsModel.addObserver(this.#handleModelChange);
@@ -79,5 +81,13 @@ export class PagePresenter {
 
   #handleNewEventButtonClick = () => {
     this.#routePresenter.createEvent();
+  };
+
+  #handleNewEventOpen = () => {
+    this.#newEventButton.disabled = true;
+  };
+
+  #handleNewEventClose = () => {
+    this.#newEventButton.disabled = false;
   };
 }

@@ -17,8 +17,8 @@ function createEditEventTemplate(state) {
     destinations,
   } = state;
 
-  const startTime = dayjs(start).format('DD/MM/YY HH:mm');
-  const endTime = dayjs(end).format('DD/MM/YY HH:mm');
+  const startTime = start ? dayjs(start).format('DD/MM/YY HH:mm') : '';
+  const endTime = end ? dayjs(end).format('DD/MM/YY HH:mm') : '';
 
   const eventTypesTemplate = EVENT_TYPES.map((eventType) => `
     <div class="event__type-item">
@@ -46,6 +46,7 @@ function createEditEventTemplate(state) {
   `).join('');
 
   return `
+    <li class="trip-events__item">
       <form class="event event--edit" action="#" method="post">
         <header class="event__header">
           <div class="event__type-wrapper">
@@ -97,25 +98,25 @@ function createEditEventTemplate(state) {
           </button>` : ''}
         </header>
         <section class="event__details">
-          <section class="event__section  event__section--offers">
+          ${availableOffers?.length > 0 ? `<section class="event__section  event__section--offers">
             <h3 class="event__section-title  event__section-title--offers">Offers</h3>
 
             <div class="event__available-offers">
               ${offersTemplate}
             </div>
-          </section>
-          ${destination ? `<section class="event__section  event__section--destination">
+          </section>` : ''}
+          ${destination?.description ? `<section class="event__section  event__section--destination">
             <h3 class="event__section-title  event__section-title--destination">Destination</h3>
             <p class="event__destination-description">${destination.description}</p>
-
-            <div class="event__photos-container">
+            ${destination.pictures.length > 0 ? `<div class="event__photos-container">
               <div class="event__photos-tape">
                 ${destinationPhotosTemplate}
               </div>
-            </div>
+            </div>` : ''}
           </section>` : ''}
         </section>
-      </form>`;
+      </form>
+    </li>`;
 }
 
 function parseState(editingEvent, destinations, availableOffers) {
@@ -133,6 +134,7 @@ function parseState(editingEvent, destinations, availableOffers) {
 }
 
 export default class EditEventView extends AbstractStatefulView {
+  #initialState;
   #destinations;
   #offersModel;
   #onSubmit;
@@ -157,11 +159,12 @@ export default class EditEventView extends AbstractStatefulView {
     this.#onDelete = onDelete;
     this.#onRollup = onRollup;
 
-    this._setState(parseState(
+    this.#initialState = parseState(
       editingEvent ?? {},
       this.#destinations,
       this.#offersModel?.getByType(editingEvent?.type) ?? []
-    ));
+    );
+    this._setState(this.#initialState);
 
     this._restoreHandlers();
   }
@@ -223,6 +226,12 @@ export default class EditEventView extends AbstractStatefulView {
     this.element.querySelector('.event__reset-btn').textContent = this._state.id ? 'Delete' : 'Cancel';
   }
 
+  reset() {
+    this._state = structuredClone(this.#initialState);
+    this.removeElement();
+    this._restoreHandlers();
+  }
+
   #submitHandler = (evt) => {
     evt.preventDefault();
     this.#onSubmit(this.editedEvent);
@@ -267,6 +276,10 @@ export default class EditEventView extends AbstractStatefulView {
 
   #priceInputHandler = (evt) => {
     evt.target.value = evt.target.value.replace(/\D/g, '');
+
+    this._setState({
+      price: Number(evt.target.value),
+    });
   };
 
   #setDatepickers() {
@@ -323,7 +336,7 @@ export default class EditEventView extends AbstractStatefulView {
   };
 
   #setControlsDisabled(isDisabled) {
-    this.element.querySelectorAll('input, button').forEach((element) => {
+    this.element.querySelectorAll('input, .event__save-btn').forEach((element) => {
       element.disabled = isDisabled;
     });
   }

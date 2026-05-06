@@ -35,6 +35,8 @@ export class RoutePresenter {
   #offersModel;
   #destinationsModel;
   #filterModel;
+  #handleNewEventOpen;
+  #handleNewEventClose;
   #currentSortType = SortType.DAY;
   #eventPresenters = {};
   #eventsView = new EventsView();
@@ -49,11 +51,20 @@ export class RoutePresenter {
     upperLimit: TimeLimit.UPPER_LIMIT,
   });
 
-  constructor({eventsModel, offersModel, destinationsModel, filterModel}) {
+  constructor({
+    eventsModel,
+    offersModel,
+    destinationsModel,
+    filterModel,
+    onNewEventOpen = () => {},
+    onNewEventClose = () => {},
+  }) {
     this.#eventsModel = eventsModel;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
     this.#filterModel = filterModel;
+    this.#handleNewEventOpen = onNewEventOpen;
+    this.#handleNewEventClose = onNewEventClose;
 
     this.#filterModel.addObserver(this.#handleFilterChange);
     this.#eventsModel.addObserver(this.#handleModelChange);
@@ -238,6 +249,7 @@ export class RoutePresenter {
     });
 
     this.#newEventPresenter.init();
+    this.#handleNewEventOpen();
   }
 
   #handleSortTypeChange = (sortType) => {
@@ -296,6 +308,7 @@ export class RoutePresenter {
 
   #handleNewEventDestroy = () => {
     this.#newEventPresenter = null;
+    this.#handleNewEventClose();
 
     if (this.#eventsModel.getEvents().length === 0) {
       this.#renderRoute();

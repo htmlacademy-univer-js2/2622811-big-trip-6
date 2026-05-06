@@ -1,22 +1,16 @@
-import dayjs from 'dayjs';
 import EditEventView from '../view/edit-event-view';
 import {render, remove, RenderPosition} from '../framework/render';
-import {EVENT_TYPES, UserAction} from '../types';
+import {UserAction} from '../types';
 
-const getDefaultEvent = (destinations) => {
-  const start = dayjs().second(0).millisecond(0);
-
-  return {
-    id: crypto.randomUUID(),
-    type: EVENT_TYPES[0],
-    date: start.startOf('day').toDate(),
-    start: start.toDate(),
-    end: start.add(1, 'hour').toDate(),
-    price: 0,
-    destination: destinations[0]?.id,
-    offers: [],
-    isFavorite: false,
-  };
+const DEFAULT_EVENT = {
+  type: 'flight',
+  date: null,
+  start: null,
+  end: null,
+  price: 0,
+  destination: null,
+  offers: [],
+  isFavorite: false,
 };
 
 export class NewEventPresenter {
@@ -46,11 +40,12 @@ export class NewEventPresenter {
     const destinations = this.#destinationsModel.getDestinations();
 
     this.#editEventView = new EditEventView({
-      editingEvent: getDefaultEvent(destinations),
+      editingEvent: structuredClone(DEFAULT_EVENT),
       destinations,
       offersModel: this.#offersModel,
       onSubmit: this.#handleFormSubmit,
       onDelete: this.destroy,
+      onRollup: this.destroy,
     });
 
     render(this.#editEventView, this.#eventsContainer, RenderPosition.AFTERBEGIN);

@@ -75,6 +75,7 @@ export class EventPresenter {
       return;
     }
     replace(this.eventView, this.editEventView);
+    this.editEventView.reset();
     this.#isEditing = false;
     document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
@@ -89,12 +90,16 @@ export class EventPresenter {
     document.removeEventListener('keyup', this.#escKeyDownHandler);
   }
 
-  #favoriteClickHandler() {
-    this.#handleDataChange(UserAction.UPDATE_EVENT, {
-      ...this.#event,
-      isFavorite: !this.#event.isFavorite,
-    }).catch(() => {});
-  }
+  #favoriteClickHandler = async () => {
+    try {
+      await this.#handleDataChange(UserAction.UPDATE_EVENT, {
+        ...this.#event,
+        isFavorite: !this.#event.isFavorite,
+      });
+    } catch {
+      this.eventView.shake();
+    }
+  };
 
   #handleEditFormSubmit = async (updatedEvent) => {
     this.editEventView.setSaving();
