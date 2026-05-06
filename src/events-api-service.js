@@ -27,7 +27,7 @@ export class EventsApiService extends ApiService {
     return await this._load({
       url: `points/${point.id}`,
       method: 'DELETE'
-    }).then(ApiService.parseResponse);
+    });
   }
 
   async getDestinations() {

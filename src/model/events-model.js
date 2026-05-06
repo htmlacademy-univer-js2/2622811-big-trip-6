@@ -37,6 +37,30 @@ export class EventsModel extends Observable {
     };
   }
 
+  #translateEventToServer(event, removeId = false) {
+    const {
+      price: basePrice,
+      start: dateFrom,
+      end: dateTo,
+      isFavorite,
+      ...adaptedEvent
+    } = event;
+    delete adaptedEvent.destinations;
+    delete adaptedEvent.date;
+
+    if (removeId) {
+      delete adaptedEvent.id;
+    }
+
+    return {
+      ...adaptedEvent,
+      'base_price': basePrice,
+      'date_from': dayjs(dateFrom).toISOString(),
+      'date_to': dayjs(dateTo).toISOString(),
+      'is_favorite': isFavorite,
+    };
+  }
+
   getEvents() {
     return Object.values(this.#events);
   }
@@ -57,11 +81,29 @@ export class EventsModel extends Observable {
     this._notify();
   }
 
-  updateEvent(updatedEvent) {
-    this.#events[updatedEvent.id] = updatedEvent;
+  async addEvent(newEvent) {
+    const createdEvent = await this.#apiService.newPoint(
+      this.#translateEventToServer(newEvent, true)
+    );
+    const adaptedEvent = this.#translateEventFromServer(createdEvent);
+
+    this.#events[adaptedEvent.id] = adaptedEvent;
+    this._notify();
   }
 
-  deleteEvent(eventId) {
+  async updateEvent(updatedEvent) {
+    const event = await this.#apiService.updatePoint(
+      this.#translateEventToServer(updatedEvent)
+    );
+    const adaptedEvent = this.#translateEventFromServer(event);
+
+    this.#events[adaptedEvent.id] = adaptedEvent;
+    this._notify();
+  }
+
+  async deleteEvent(eventId) {
+    await this.#apiService.deletePoint({id: eventId});
     delete this.#events[eventId];
+    this._notify();
   }
 }

@@ -251,21 +251,23 @@ export class RoutePresenter {
     this.#renderRoute();
   };
 
-  #handleUserAction = (actionType, update) => {
-    switch (actionType) {
-      case UserAction.UPDATE_EVENT:
-        this.#eventsModel.updateEvent(update);
-        break;
-      case UserAction.ADD_EVENT:
-        this.#destroyNewEvent();
-        this.#eventsModel.updateEvent(update);
-        break;
-      case UserAction.DELETE_EVENT:
-        this.#eventsModel.deleteEvent(update.id);
-        break;
+  #handleUserAction = async (actionType, update) => {
+    try {
+      switch (actionType) {
+        case UserAction.UPDATE_EVENT:
+          await this.#eventsModel.updateEvent(update);
+          break;
+        case UserAction.ADD_EVENT:
+          await this.#eventsModel.addEvent(update);
+          this.#destroyNewEvent();
+          break;
+        case UserAction.DELETE_EVENT:
+          await this.#eventsModel.deleteEvent(update.id);
+          break;
+      }
+    } catch {
+      // ignore
     }
-
-    this.#renderRoute();
   };
 
   #handleModeChange = () => {

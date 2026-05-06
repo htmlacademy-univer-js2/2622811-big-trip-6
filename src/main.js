@@ -6,8 +6,12 @@ import {FilterModel} from './model/filter-model';
 import {FilterPresenter} from './presenter/filter-presenter';
 import {EventsApiService} from './events-api-service.js';
 
+if (localStorage.getItem('token') === null) {
+  localStorage.setItem('token', crypto.randomUUID());
+}
+
 const ENDPOINT = 'https://24.objects.htmlacademy.pro/big-trip';
-const AUTHORIZATION = `Basic ${crypto.randomUUID()}`;
+const AUTHORIZATION = `Basic ${localStorage.getItem('token')}`;
 
 const apiService = new EventsApiService(ENDPOINT, AUTHORIZATION);
 
