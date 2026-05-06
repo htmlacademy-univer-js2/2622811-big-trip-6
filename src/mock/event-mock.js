@@ -50,8 +50,8 @@ export const DESTINATIONS = [
 ];
 
 function createRandomSchedule() {
-  const start = dayjs('2019-03-18')
-    .add(getRandomNumber(-3, 7), 'day')
+  const start = dayjs()
+    .add(getRandomNumber(-7, 7), 'day')
     .hour(getRandomNumber(0, 23))
     .minute(getRandomNumber(0, 3) * 15)
     .second(0)

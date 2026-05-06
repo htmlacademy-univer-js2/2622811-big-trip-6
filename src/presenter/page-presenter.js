@@ -1,5 +1,4 @@
 import InfoView from '../view/info-view';
-import FilterView from '../view/filter-view';
 import {render, RenderPosition} from '../framework/render';
 import {RoutePresenter} from './route-presenter';
 
@@ -7,12 +6,13 @@ export class PagePresenter {
   #eventsModel;
   #routePresenter;
 
-  constructor({ eventsModel, offersModel, destinationsModel }) {
+  constructor({ eventsModel, offersModel, destinationsModel, filterModel }) {
     this.#eventsModel = eventsModel;
     this.#routePresenter = new RoutePresenter({
       eventsModel,
       offersModel,
       destinationsModel,
+      filterModel,
     });
   }
 
@@ -21,7 +21,6 @@ export class PagePresenter {
       this.#renderInfo();
     }
 
-    this.#renderFilter();
     this.#routePresenter.init();
   }
 
@@ -39,9 +38,4 @@ export class PagePresenter {
     );
   }
 
-  #renderFilter() {
-    const filterView = new FilterView('everything');
-
-    render(filterView, document.querySelector('.trip-controls__filters'));
-  }
 }
