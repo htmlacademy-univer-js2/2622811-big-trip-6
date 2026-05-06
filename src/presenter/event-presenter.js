@@ -93,14 +93,28 @@ export class EventPresenter {
     this.#handleDataChange(UserAction.UPDATE_EVENT, {
       ...this.#event,
       isFavorite: !this.#event.isFavorite,
-    });
+    }).catch(() => {});
   }
 
-  #handleEditFormSubmit(updatedEvent) {
-    this.#handleDataChange(UserAction.UPDATE_EVENT, updatedEvent);
-  }
+  #handleEditFormSubmit = async (updatedEvent) => {
+    this.editEventView.setSaving();
 
-  #handleDeleteClick(deletedEvent) {
-    this.#handleDataChange(UserAction.DELETE_EVENT, deletedEvent);
-  }
+    try {
+      await this.#handleDataChange(UserAction.UPDATE_EVENT, updatedEvent);
+    } catch {
+      this.editEventView.resetControls();
+      this.editEventView.shake();
+    }
+  };
+
+  #handleDeleteClick = async (deletedEvent) => {
+    this.editEventView.setDeleting();
+
+    try {
+      await this.#handleDataChange(UserAction.DELETE_EVENT, deletedEvent);
+    } catch {
+      this.editEventView.resetControls();
+      this.editEventView.shake();
+    }
+  };
 }
