@@ -4,6 +4,8 @@ import {render, RenderPosition, remove} from '../framework/render';
 import RoutePresenter from './route-presenter';
 import {encode} from '../utils/escape';
 
+const MAX_DESTINATIONS_IN_TITLE = 3;
+
 export default class PagePresenter {
   #eventsModel;
   #offersModel;
@@ -67,7 +69,7 @@ export default class PagePresenter {
       .map((event) => this.#destinationsModel.getById(event.destination)?.name)
       .filter(Boolean);
 
-    if (destinationNames.length > 3) {
+    if (destinationNames.length > MAX_DESTINATIONS_IN_TITLE) {
       return `${encode(destinationNames[0])} &mdash; ... &mdash; ${encode(destinationNames[destinationNames.length - 1])}`;
     }
 
