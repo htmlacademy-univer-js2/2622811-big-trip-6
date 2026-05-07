@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import Observable from '../framework/observable';
 
-export class EventsModel extends Observable {
+export default class EventsModel extends Observable {
   #apiService = null;
   #events = {};
   #isLoaded = false;
@@ -82,7 +82,7 @@ export class EventsModel extends Observable {
   }
 
   async addEvent(newEvent) {
-    const createdEvent = await this.#apiService.newPoint(
+    const createdEvent = await this.#apiService.createPoint(
       this.#translateEventToServer(newEvent, true)
     );
     const adaptedEvent = this.#translateEventFromServer(createdEvent);

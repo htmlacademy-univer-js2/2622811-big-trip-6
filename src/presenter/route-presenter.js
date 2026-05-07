@@ -5,9 +5,10 @@ import LoadingMessageView from '../view/loading-message-view';
 import FailedLoadMessageView from '../view/failed-load-message-view';
 import {render, RenderPosition, remove} from '../framework/render';
 import UiBlocker from '../framework/ui-blocker/ui-blocker';
-import {EventPresenter} from './event-presenter';
-import {NewEventPresenter} from './new-event-presenter';
+import EventPresenter from './event-presenter';
+import NewEventPresenter from './new-event-presenter';
 import {FilterType, SortType, UserAction} from '../types';
+import {filter} from '../utils/filter';
 
 const TimeLimit = {
   LOWER_LIMIT: 350,
@@ -23,18 +24,13 @@ const sortEventsByTime = (eventA, eventB) =>
 
 const sortEventsByPrice = (eventA, eventB) => eventB.price - eventA.price;
 
-const filter = {
-  [FilterType.EVERYTHING]: (events) => events,
-  [FilterType.FUTURE]: (events) => events.filter((event) => new Date(event.start) > new Date()),
-  [FilterType.PRESENT]: (events) => events.filter((event) => new Date(event.start) <= new Date() && new Date(event.end) >= new Date()),
-  [FilterType.PAST]: (events) => events.filter((event) => new Date(event.end) < new Date()),
-};
-
-export class RoutePresenter {
+export default class RoutePresenter {
   #eventsModel;
   #offersModel;
   #destinationsModel;
   #filterModel;
+  #handleNewEventOpen;
+  #handleNewEventClose;
   #currentSortType = SortType.DAY;
   #eventPresenters = {};
   #eventsView = new EventsView();
@@ -49,11 +45,22 @@ export class RoutePresenter {
     upperLimit: TimeLimit.UPPER_LIMIT,
   });
 
-  constructor({eventsModel, offersModel, destinationsModel, filterModel}) {
+  #container = document.querySelector('.trip-events');
+
+  constructor({
+    eventsModel,
+    offersModel,
+    destinationsModel,
+    filterModel,
+    onNewEventOpen = () => {},
+    onNewEventClose = () => {},
+  }) {
     this.#eventsModel = eventsModel;
     this.#offersModel = offersModel;
     this.#destinationsModel = destinationsModel;
     this.#filterModel = filterModel;
+    this.#handleNewEventOpen = onNewEventOpen;
+    this.#handleNewEventClose = onNewEventClose;
 
     this.#filterModel.addObserver(this.#handleFilterChange);
     this.#eventsModel.addObserver(this.#handleModelChange);
@@ -88,7 +95,7 @@ export class RoutePresenter {
 
     render(
       this.#sortView,
-      document.querySelector('.trip-events'),
+      this.#container,
       RenderPosition.AFTERBEGIN,
     );
   }
@@ -111,7 +118,7 @@ export class RoutePresenter {
 
   #renderEmptyMessage() {
     this.#emptyMessageView = new EmptyMessageView(this.#filterModel.getFilter());
-    render(this.#emptyMessageView, document.querySelector('.trip-events'));
+    render(this.#emptyMessageView, this.#container);
   }
 
   #renderLoadingMessage() {
@@ -120,7 +127,7 @@ export class RoutePresenter {
     }
 
     this.#loadingMessageView = new LoadingMessageView();
-    render(this.#loadingMessageView, document.querySelector('.trip-events'));
+    render(this.#loadingMessageView, this.#container);
   }
 
   #renderFailedLoadMessage() {
@@ -129,7 +136,7 @@ export class RoutePresenter {
     }
 
     this.#failedLoadMessageView = new FailedLoadMessageView();
-    render(this.#failedLoadMessageView, document.querySelector('.trip-events'));
+    render(this.#failedLoadMessageView, this.#container);
   }
 
   #renderEventsView() {
@@ -137,7 +144,7 @@ export class RoutePresenter {
       return;
     }
 
-    render(this.#eventsView, document.querySelector('.trip-events'));
+    render(this.#eventsView, this.#container);
     this.#isEventsViewRendered = true;
   }
 
@@ -238,6 +245,7 @@ export class RoutePresenter {
     });
 
     this.#newEventPresenter.init();
+    this.#handleNewEventOpen();
   }
 
   #handleSortTypeChange = (sortType) => {
@@ -296,6 +304,7 @@ export class RoutePresenter {
 
   #handleNewEventDestroy = () => {
     this.#newEventPresenter = null;
+    this.#handleNewEventClose();
 
     if (this.#eventsModel.getEvents().length === 0) {
       this.#renderRoute();

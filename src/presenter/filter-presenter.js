@@ -1,15 +1,33 @@
 import FilterView from '../view/filter-view';
 import {render, remove} from '../framework/render';
+import {FilterType} from '../types';
+import {filter} from '../utils/filter';
 
-export class FilterPresenter {
+const FilterName = {
+  [FilterType.EVERYTHING]: 'Everything',
+  [FilterType.FUTURE]: 'Future',
+  [FilterType.PRESENT]: 'Present',
+  [FilterType.PAST]: 'Past',
+};
+
+const generateFilterItems = (events) => Object.values(FilterType).map((filterType) => ({
+  id: filterType,
+  name: FilterName[filterType],
+  disabled: filter[filterType](events).length === 0,
+}));
+
+export default class FilterPresenter {
+  #eventsModel;
   #filterModel;
   #filterContainer;
   #filterView = null;
 
-  constructor({filterModel, filterContainer}) {
+  constructor({eventsModel, filterModel, filterContainer}) {
+    this.#eventsModel = eventsModel;
     this.#filterModel = filterModel;
     this.#filterContainer = filterContainer;
 
+    this.#eventsModel.addObserver(this.#handleEventsChange);
     this.#filterModel.addObserver(this.#handleFilterChange);
   }
 
@@ -17,6 +35,7 @@ export class FilterPresenter {
     const prevFilterView = this.#filterView;
 
     this.#filterView = new FilterView({
+      filterItems: generateFilterItems(this.#eventsModel.getEvents()),
       selectedItem: this.#filterModel.getFilter(),
       onFilterTypeChange: this.#handleFilterTypeChange,
     });
@@ -37,6 +56,10 @@ export class FilterPresenter {
   };
 
   #handleFilterChange = () => {
+    this.init();
+  };
+
+  #handleEventsChange = () => {
     this.init();
   };
 }

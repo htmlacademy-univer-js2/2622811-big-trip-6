@@ -1,11 +1,11 @@
 import ApiService from './framework/api-service';
 
-export class EventsApiService extends ApiService {
+export default class EventsApiService extends ApiService {
   async getPoints() {
     return this._load({url: 'points'}).then(ApiService.parseResponse);
   }
 
-  async newPoint(point) {
+  async createPoint(point) {
     return await this._load({
       url: 'points',
       method: 'POST',

@@ -2,7 +2,7 @@ import AbstractView from '../framework/view/abstract-view';
 import {FilterType} from '../types';
 
 function createFilterTemplate({filterItems, selectedItem}) {
-  const filtersTemplate = filterItems.map(({ id, name }) => `
+  const filtersTemplate = filterItems.map(({ id, name, disabled = false }) => `
     <div class="trip-filters__filter">
       <input id="filter-${id}"
              class="trip-filters__filter-input  visually-hidden"
@@ -10,7 +10,8 @@ function createFilterTemplate({filterItems, selectedItem}) {
              name="trip-filter"
              value="${id}"
              data-filter-type="${id}"
-             ${selectedItem === id ? 'checked' : ''}>
+             ${selectedItem === id ? 'checked' : ''}
+             ${disabled ? 'disabled' : ''}>
       <label class="trip-filters__filter-label" for="filter-${id}">${name}</label>
     </div>
   `).join('');
@@ -32,10 +33,12 @@ const FILTERS = [
 
 export default class FilterView extends AbstractView{
   #selectedItem = null;
+  #filterItems = [];
   #handleFilterTypeChange = null;
 
-  constructor({selectedItem, onFilterTypeChange}) {
+  constructor({filterItems = FILTERS, selectedItem, onFilterTypeChange}) {
     super();
+    this.#filterItems = filterItems;
     this.#selectedItem = selectedItem;
     this.#handleFilterTypeChange = onFilterTypeChange;
 
@@ -43,7 +46,7 @@ export default class FilterView extends AbstractView{
   }
 
   get template() {
-    return createFilterTemplate({filterItems: FILTERS, selectedItem: this.#selectedItem});
+    return createFilterTemplate({filterItems: this.#filterItems, selectedItem: this.#selectedItem});
   }
 
   #filterTypeChangeHandler = (evt) => {

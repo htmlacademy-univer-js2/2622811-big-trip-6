@@ -1,6 +1,6 @@
 import Observable from '../framework/observable';
 
-export class OffersModel extends Observable {
+export default class OffersModel extends Observable {
   #apiService = null;
   #offersByType = {};
   #offersById = {};

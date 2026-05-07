@@ -1,18 +1,22 @@
 import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
+import {encode} from '../utils/escape';
+
+const MINUTES_IN_HOUR = 60;
+const MINUTES_IN_DAY = 24 * MINUTES_IN_HOUR;
 
 function formatDuration(start, end) {
   const durationMinutes = dayjs(end).diff(dayjs(start), 'minute');
 
-  if (durationMinutes < 60) {
+  if (durationMinutes < MINUTES_IN_HOUR) {
     return `${durationMinutes}M`;
   }
 
-  const days = Math.floor(durationMinutes / (24 * 60));
-  const hours = Math.floor((durationMinutes % (24 * 60)) / 60);
-  const minutes = durationMinutes % 60;
+  const days = Math.floor(durationMinutes / MINUTES_IN_DAY);
+  const hours = Math.floor((durationMinutes % MINUTES_IN_DAY) / MINUTES_IN_HOUR);
+  const minutes = durationMinutes % MINUTES_IN_HOUR;
 
-  if (durationMinutes < 24 * 60) {
+  if (durationMinutes < MINUTES_IN_DAY) {
     return `${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
   }
 
@@ -28,11 +32,11 @@ function createEventTemplate({date, type, start, end, price, isFavorite}, offers
   const endTime = dayjs(end).format('HH:mm');
   const duration = formatDuration(start, end);
 
-  const title = `${type} ${destination.name}`;
+  const title = `${encode(type)} ${encode(destination.name)}`;
 
   const offersTemplate = offers.map(({title: offerTitle, price: offerPrice}) => `
     <li class="event__offer">
-      <span class="event__offer-title">${offerTitle}</span>
+      <span class="event__offer-title">${encode(offerTitle)}</span>
       &plus;&euro;&nbsp;
       <span class="event__offer-price">${offerPrice}</span>
     </li>
@@ -43,7 +47,7 @@ function createEventTemplate({date, type, start, end, price, isFavorite}, offers
       <div class="event">
         <time class="event__date" datetime="${dateISO}">${dateShort}</time>
         <div class="event__type">
-          <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
+          <img class="event__type-icon" width="42" height="42" src="img/icons/${encode(type)}.png" alt="Event type icon">
         </div>
         <h3 class="event__title">${title}</h3>
         <div class="event__schedule">

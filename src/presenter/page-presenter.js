@@ -1,8 +1,10 @@
+import dayjs from 'dayjs';
 import InfoView from '../view/info-view';
-import {render, RenderPosition} from '../framework/render';
-import {RoutePresenter} from './route-presenter';
+import {render, RenderPosition, remove} from '../framework/render';
+import RoutePresenter from './route-presenter';
+import {encode} from '../utils/escape';
 
-export class PagePresenter {
+export default class PagePresenter {
   #eventsModel;
   #offersModel;
   #destinationsModel;
@@ -19,6 +21,8 @@ export class PagePresenter {
       offersModel,
       destinationsModel,
       filterModel,
+      onNewEventOpen: this.#handleNewEventOpen,
+      onNewEventClose: this.#handleNewEventClose,
     });
 
     this.#eventsModel.addObserver(this.#handleModelChange);
@@ -36,14 +40,13 @@ export class PagePresenter {
   }
 
   #renderInfo() {
-    if (this.#infoView !== null) {
-      return;
-    }
+    const events = this.#getSortedEvents();
 
+    remove(this.#infoView);
     this.#infoView = new InfoView(
-      'Amsterdam &mdash; Chamonix &mdash; Geneva',
-      '18&nbsp;&mdash;&nbsp;20 Mar',
-      1230,
+      this.#formatTripTitle(events),
+      this.#formatTripDates(events),
+      this.#calculateTripCost(events),
     );
 
     render(
@@ -51,6 +54,45 @@ export class PagePresenter {
       document.querySelector('.trip-main'),
       RenderPosition.AFTERBEGIN,
     );
+  }
+
+  #getSortedEvents() {
+    return [...this.#eventsModel.getEvents()].sort((eventA, eventB) =>
+      new Date(eventA.start).getTime() - new Date(eventB.start).getTime()
+    );
+  }
+
+  #formatTripTitle(events) {
+    const destinationNames = events
+      .map((event) => this.#destinationsModel.getById(event.destination)?.name)
+      .filter(Boolean);
+
+    if (destinationNames.length > 3) {
+      return `${encode(destinationNames[0])} &mdash; ... &mdash; ${encode(destinationNames[destinationNames.length - 1])}`;
+    }
+
+    return destinationNames.map((destinationName) => encode(destinationName)).join(' &mdash; ');
+  }
+
+  #formatTripDates(events) {
+    const firstEvent = events[0];
+    const lastEvent = events[events.length - 1];
+    const start = dayjs(firstEvent.start);
+    const end = dayjs(lastEvent.end);
+
+    return `${start.format('D MMM')}&nbsp;&mdash;&nbsp;${end.format('D MMM')}`;
+  }
+
+  #calculateTripCost(events) {
+    return events.reduce((total, event) => {
+      const offersCost = event.offers.reduce((offersTotal, offerId) => {
+        const offer = this.#offersModel.getById(offerId);
+
+        return offersTotal + (offer?.price ?? 0);
+      }, 0);
+
+      return total + event.price + offersCost;
+    }, 0);
   }
 
   #isDataLoaded() {
@@ -74,10 +116,22 @@ export class PagePresenter {
   #handleModelChange = () => {
     if (this.#shouldRenderInfo()) {
       this.#renderInfo();
+      return;
     }
+
+    remove(this.#infoView);
+    this.#infoView = null;
   };
 
   #handleNewEventButtonClick = () => {
     this.#routePresenter.createEvent();
+  };
+
+  #handleNewEventOpen = () => {
+    this.#newEventButton.disabled = true;
+  };
+
+  #handleNewEventClose = () => {
+    this.#newEventButton.disabled = false;
   };
 }
