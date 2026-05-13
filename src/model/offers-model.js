@@ -18,16 +18,16 @@ export default class OffersModel extends Observable {
     });
   }
 
-  getOffers() {
-    return Object.values(this.#offersByType);
-  }
-
   get isLoaded() {
     return this.#isLoaded;
   }
 
   get isFailed() {
     return this.#isFailed;
+  }
+
+  getOffers() {
+    return Object.values(this.#offersByType);
   }
 
   setOffers(offerTypes) {

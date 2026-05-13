@@ -1,5 +1,13 @@
 import AbstractView from '../framework/view/abstract-view';
 
+const SORT_ITEMS = [
+  {id: 'day', name: 'Day'},
+  {id: 'event', name: 'Event', disabled: true},
+  {id: 'time', name: 'Time'},
+  {id: 'price', name: 'Price'},
+  {id: 'offers', name: 'Offers', disabled: true},
+];
+
 function createSortTemplate({sortItems, selectedItem}) {
   const sortItemsTemplate = sortItems.map(({ id, name, disabled = false }) => `
     <div class="trip-sort__item  trip-sort__item--${id}">
@@ -22,14 +30,6 @@ function createSortTemplate({sortItems, selectedItem}) {
     </form>
   `;
 }
-
-const SORT_ITEMS = [
-  {id: 'day', name: 'Day'},
-  {id: 'event', name: 'Event', disabled: true},
-  {id: 'time', name: 'Time'},
-  {id: 'price', name: 'Price'},
-  {id: 'offers', name: 'Offers', disabled: true},
-];
 
 export default class SortView extends AbstractView {
   #selectedItem = null;
