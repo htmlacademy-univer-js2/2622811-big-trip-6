@@ -17,16 +17,16 @@ export default class DestinationsModel extends Observable {
     });
   }
 
-  getDestinations() {
-    return this.#destinations;
-  }
-
   get isLoaded() {
     return this.#isLoaded;
   }
 
   get isFailed() {
     return this.#isFailed;
+  }
+
+  getDestinations() {
+    return this.#destinations;
   }
 
   setDestinations(destinations) {

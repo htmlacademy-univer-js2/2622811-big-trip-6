@@ -1,6 +1,13 @@
 import AbstractView from '../framework/view/abstract-view';
 import {FilterType} from '../types';
 
+const FILTERS = [
+  {id: FilterType.EVERYTHING, name: 'Everything'},
+  {id: FilterType.FUTURE, name: 'Future'},
+  {id: FilterType.PRESENT, name: 'Present'},
+  {id: FilterType.PAST, name: 'Past'},
+];
+
 function createFilterTemplate({filterItems, selectedItem}) {
   const filtersTemplate = filterItems.map(({ id, name, disabled = false }) => `
     <div class="trip-filters__filter">
@@ -23,13 +30,6 @@ function createFilterTemplate({filterItems, selectedItem}) {
     </form>
   `;
 }
-
-const FILTERS = [
-  {id: FilterType.EVERYTHING, name: 'Everything'},
-  {id: FilterType.FUTURE, name: 'Future'},
-  {id: FilterType.PRESENT, name: 'Present'},
-  {id: FilterType.PAST, name: 'Past'},
-];
 
 export default class FilterView extends AbstractView{
   #selectedItem = null;
